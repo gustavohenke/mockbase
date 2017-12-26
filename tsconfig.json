@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "outDir": ".",
+    "module": "esnext",
+    "target": "es5",
+    "lib": [
+      "es6",
+      "es7"
+    ],
+    "sourceMap": true,
+    "allowJs": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "rootDir": "",
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true
+  },
+  "exclude": [
+    "node_modules",
+  ]
+}
