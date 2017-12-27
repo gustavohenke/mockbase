@@ -12,6 +12,7 @@
     "typescript": "^2.6.2"
   },
   "scripts": {
+    "build": "tsc",
     "test": "jest"
   },
   "repository": "gustavohenke/firebase-stub",
