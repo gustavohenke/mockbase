@@ -22,7 +22,7 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  createUserWithEmailAndPassword(email: string, password: string): Promise<any> {
+  createUserWithEmailAndPassword(email: string, password: string): Promise<User> {
     const user = this.store.add(new User({ email, password }));
     return Promise.resolve(user);
   }
@@ -66,8 +66,14 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  signInAnonymously(): Promise<any> {
-    throw new Error("Method not implemented.");
+  signInAnonymously(): Promise<User> {
+    if (this.currentUser && this.currentUser.isAnonymous) {
+      return Promise.resolve(this.currentUser);
+    }
+
+    const user = this.store.add({ isAnonymous: true });
+    this.currentUser = user;
+    return Promise.resolve(user);
   }
 
   signInWithCredential(credential: firebase.auth.AuthCredential): Promise<any> {
