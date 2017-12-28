@@ -5,3 +5,4 @@ npm-debug.log*
 # Build
 *.js
 *.js.map
+/coverage
