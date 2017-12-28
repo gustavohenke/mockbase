@@ -115,7 +115,7 @@ export class User implements firebase.User, UserSchema {
     throw new Error("Method not implemented.");
   }
 
-  toJSON(): UserSchema {
+  toJSON(): Object {
     const self: UserSchema = this;
     return { ...self };
   }

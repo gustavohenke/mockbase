@@ -11,7 +11,7 @@ export class UserStore {
       uid: this.nextId + ""
     });
 
-    data.email && this.emailStore.set(data.email, user.toJSON());
+    data.email && this.emailStore.set(data.email, user.toJSON() as UserSchema);
     return user;
   }
 
