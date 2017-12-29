@@ -84,8 +84,16 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  signInWithEmailAndPassword(email: string, password: string): Promise<any> {
-    throw new Error("Method not implemented.");
+  signInWithEmailAndPassword(email: string, password: string): Promise<User> {
+    const user = this.store.findByEmail(email);
+    if (!user) {
+      return Promise.reject(new Error("auth/user-not-found"));
+    } else if (user.password !== password) {
+      return Promise.reject(new Error("auth/wrong-password"));
+    }
+
+    this.currentUser = user;
+    return Promise.resolve(user);
   }
 
   signInWithPhoneNumber(

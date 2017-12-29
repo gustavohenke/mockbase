@@ -42,3 +42,28 @@ describe("#signInAnonymously()", () => {
     expect(auth.currentUser).toBe(user1);
   });
 });
+
+describe("#signInWithEmailAndPassword", () => {
+  it("errors with auth/user-not-found if user doesn't exist", () => {
+    const auth = new MockAuth(app);
+    const promise = auth.signInWithEmailAndPassword("foo@bar.com", "123");
+    return expect(promise).rejects.toThrow("auth/user-not-found");
+  });
+
+  it("errors with auth/wrong-password if password doesn't match", () => {
+    const auth = new MockAuth(app);
+    auth.store.add({ email: "foo@bar.com", password: "baz" });
+
+    const promise = auth.signInWithEmailAndPassword("foo@bar.com", "123");
+    return expect(promise).rejects.toThrow("auth/wrong-password");
+  });
+
+  it("signs in with the given e-mail and password", async () => {
+    const auth = new MockAuth(app);
+    const user1 = auth.store.add({ email: "foo@bar.com", password: "baz" });
+
+    const user2 = await auth.signInWithEmailAndPassword("foo@bar.com", "baz");
+    expect(user2).toEqual(user1);
+    expect(auth.currentUser).toEqual(user2);
+  });
+});
