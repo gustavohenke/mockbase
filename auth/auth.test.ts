@@ -23,6 +23,14 @@ describe("#createUserWithEmailAndPassword()", () => {
       password: "password"
     });
   });
+
+  it("throws auth/email-already-in-use if another account uses that email", () => {
+    const auth = new MockAuth(app);
+    auth.store.add({ email: "foo@bar.com" });
+
+    const create = () => auth.createUserWithEmailAndPassword("foo@bar.com", "baz");
+    expect(create).toThrow("auth/email-already-in-use");
+  });
 });
 
 describe("#onAuthStateChange()", () => {

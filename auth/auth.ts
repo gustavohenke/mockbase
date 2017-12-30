@@ -3,7 +3,6 @@ import { MockApp } from "../app";
 import { SocialSignInMock } from "./social-signin-mock";
 import { User } from "./user";
 import { UserStore } from "./user-store";
-import { listenerCount } from "cluster";
 
 type AuthStateChangeListener = (user: firebase.User | null) => void;
 
@@ -29,6 +28,10 @@ export class MockAuth implements firebase.auth.Auth {
   }
 
   createUserWithEmailAndPassword(email: string, password: string): Promise<User> {
+    if (this.store.findByEmail(email)) {
+      throw new Error("auth/email-already-in-use");
+    }
+
     const user = this.store.add({ email, password });
     return Promise.resolve(user);
   }
