@@ -6,11 +6,8 @@ export class UserStore {
   private emailStore = new Map<string, UserSchema>();
 
   add(data: Partial<UserSchema>): User {
-    this.nextId++;
-    const user = new User({
-      ...data,
-      uid: this.nextId + ""
-    });
+    const uid = ++this.nextId + "";
+    const user = new User({ ...data, uid }, this);
 
     const schema = user.toJSON() as UserSchema;
     this.idStore.set(schema.uid, schema);
@@ -20,7 +17,7 @@ export class UserStore {
 
   findByEmail(email: string): User | undefined {
     const schema = this.emailStore.get(email);
-    return schema ? new User(schema) : undefined;
+    return schema ? new User(schema, this) : undefined;
   }
 
   update(id: string, data: Partial<UserSchema>) {

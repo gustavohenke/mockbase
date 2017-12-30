@@ -1,4 +1,5 @@
 import * as firebase from "firebase";
+import { UserStore } from "./user-store";
 
 export interface UserSchema {
   emailVerified: boolean;
@@ -29,7 +30,7 @@ export class User implements firebase.User, UserSchema {
   refreshToken: string;
   uid: string;
 
-  constructor(data: Partial<UserSchema>) {
+  constructor(data: Partial<UserSchema>, private readonly store: UserStore) {
     Object.assign(this, data, {
       displayName: data.displayName || null,
       email: data.email || null,
@@ -124,19 +125,44 @@ export class User implements firebase.User, UserSchema {
     throw new Error("Method not implemented.");
   }
 
-  updateEmail(newEmail: string): Promise<any> {
-    throw new Error("Method not implemented.");
+  updateEmail(newEmail: string): Promise<void> {
+    if (this.email === newEmail) {
+      return Promise.resolve();
+    }
+
+    const anotherUser = this.store.findByEmail(newEmail);
+    if (anotherUser) {
+      return Promise.reject(new Error("auth/email-already-in-use"));
+    }
+
+    this.email = newEmail;
+    this.store.update(this.uid, { email: newEmail });
+
+    return Promise.resolve();
   }
 
-  updatePassword(newPassword: string): Promise<any> {
-    throw new Error("Method not implemented.");
+  updatePassword(newPassword: string): Promise<void> {
+    this.password = newPassword;
+    this.store.update(this.uid, { password: newPassword });
+
+    return Promise.resolve();
   }
 
   updatePhoneNumber(phoneCredential: firebase.auth.AuthCredential): Promise<any> {
     throw new Error("Method not implemented.");
   }
 
-  updateProfile(profile: { displayName: string | null; photoURL: string | null }): Promise<any> {
-    throw new Error("Method not implemented.");
+  updateProfile({
+    displayName,
+    photoURL
+  }: {
+    displayName?: string | null;
+    photoURL?: string | null;
+  }): Promise<void> {
+    this.displayName = displayName || null;
+    this.photoURL = photoURL || null;
+    this.store.update(this.uid, { displayName, photoURL });
+
+    return Promise.resolve();
   }
 }
