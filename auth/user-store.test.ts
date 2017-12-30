@@ -21,3 +21,16 @@ describe("#findByEmail()", () => {
     expect(user!.email).toBe("foo@bar.com");
   });
 });
+
+describe("#update()", () => {
+  it("changes data of schema", () => {
+    const store = new UserStore();
+    const { uid } = store.add({ email: "foo@bar.com" });
+
+    store.update(uid, { displayName: "foo bar", photoURL: "foo.bar/baz.jpg" });
+
+    const user = store.findByEmail("foo@bar.com");
+    expect(user).toHaveProperty("displayName", "foo bar");
+    expect(user).toHaveProperty("photoURL", "foo.bar/baz.jpg");
+  });
+});
