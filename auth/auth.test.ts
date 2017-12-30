@@ -42,7 +42,20 @@ describe("#onAuthStateChange()", () => {
     auth.onAuthStateChanged(listener);
 
     const user = await auth.signInAnonymously();
+    expect(listener).toHaveBeenCalledTimes(2);
     expect(listener).toHaveBeenCalledWith(user);
+  });
+
+  it("doesn't invokes the listener after it's disposed", async () => {
+    const auth = new MockAuth(app);
+    const listener = jest.fn();
+    const disposer = auth.onAuthStateChanged(listener);
+    disposer();
+
+    await auth.signInAnonymously();
+
+    // Just the initial call and that's it
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });
 
