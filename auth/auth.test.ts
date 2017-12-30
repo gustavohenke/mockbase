@@ -200,3 +200,24 @@ describe("#signInWithRedirect()", () => {
     return expect(promise).rejects.toThrow("auth/account-exists-with-different-credential");
   });
 });
+
+describe("#signOut()", () => {
+  it("signs the user out", async () => {
+    const auth = new MockAuth(app);
+    await auth.signInAnonymously();
+    await auth.signOut();
+    expect(auth.currentUser).toBeNull();
+  });
+
+  it("invokes authStateChange listeners", async () => {
+    const auth = new MockAuth(app);
+    await auth.signInAnonymously();
+
+    const listener = jest.fn();
+    auth.onAuthStateChanged(listener);
+
+    await auth.signOut();
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(listener).toHaveBeenCalledWith(null);
+  });
+});
