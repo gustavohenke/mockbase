@@ -29,7 +29,7 @@ export class MockAuth implements firebase.auth.Auth {
   }
 
   createUserWithEmailAndPassword(email: string, password: string): Promise<User> {
-    const user = this.store.add(new User({ email, password }));
+    const user = this.store.add({ email, password });
     return Promise.resolve(user);
   }
 

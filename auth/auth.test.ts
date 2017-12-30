@@ -17,7 +17,7 @@ describe("#createUserWithEmailAndPassword()", () => {
     const auth = new MockAuth(app);
     jest.spyOn(auth.store, "add");
 
-    auth.store.add({ email: "foo@bar.com", password: "password" });
+    auth.createUserWithEmailAndPassword("foo@bar.com", "password");
     expect(auth.store.add).toHaveBeenCalledWith({
       email: "foo@bar.com",
       password: "password"
