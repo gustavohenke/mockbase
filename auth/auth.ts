@@ -170,9 +170,7 @@ export class MockAuth implements firebase.auth.Auth {
     return Promise.resolve();
   }
 
-  useDeviceLanguage() {
-    throw new Error("Method not implemented.");
-  }
+  useDeviceLanguage() {}
 
   verifyPasswordResetCode(code: string): Promise<any> {
     throw new Error("Method not implemented.");
