@@ -160,55 +160,6 @@ describe("#signInWithPopup()", () => {
   });
 });
 
-describe("#signInWithRedirect()", () => {
-  it("responds with user mock", async () => {
-    const provider = new firebase.auth.FacebookAuthProvider();
-
-    const auth = new MockAuth(app);
-    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
-
-    const user = await auth.signInWithRedirect(provider);
-    expect(auth.currentUser).toBe(user);
-    expect(user).toHaveProperty("displayName", "Foo");
-    expect(user).toHaveProperty("email", "foo@bar.com");
-    expect(user).toHaveProperty("providerId", provider.providerId);
-  });
-
-  it("responds with error mock", () => {
-    const provider = new firebase.auth.FacebookAuthProvider();
-
-    const auth = new MockAuth(app);
-    auth.mockSocialSignIn(provider).respondWithError("auth/unauthorized-domain");
-
-    const promise = auth.signInWithRedirect(provider);
-    return expect(promise).rejects.toThrow("auth/unauthorized-domain");
-  });
-
-  it("signs in again using same provider", async () => {
-    const provider = new firebase.auth.FacebookAuthProvider();
-
-    const auth = new MockAuth(app);
-    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
-    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
-
-    const user1 = await auth.signInWithRedirect(provider);
-    const user2 = await auth.signInWithRedirect(provider);
-    expect(user1).toEqual(user2);
-    expect(auth.currentUser).toBe(user2);
-  });
-
-  it("throws if email already exists for another account", () => {
-    const provider = new firebase.auth.FacebookAuthProvider();
-
-    const auth = new MockAuth(app);
-    auth.createUserWithEmailAndPassword("foo@bar.com", "baz");
-    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
-
-    const promise = auth.signInWithRedirect(provider);
-    return expect(promise).rejects.toThrow("auth/account-exists-with-different-credential");
-  });
-});
-
 describe("#signOut()", () => {
   it("signs the user out", async () => {
     const auth = new MockAuth(app);

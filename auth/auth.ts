@@ -104,32 +104,6 @@ export class MockAuth implements firebase.auth.Auth {
     return this.signIn(user);
   }
 
-  private async signInSocially(provider: firebase.auth.AuthProvider): Promise<User> {
-    const mock = Array.from(this.socialSignIns.values()).find(
-      mock => mock.type === provider.providerId
-    );
-
-    if (!mock) {
-      throw new Error("No mock response set.");
-    }
-
-    // Mock is used, then it must go
-    this.socialSignIns.delete(mock);
-
-    const data = await mock.response;
-    let user = this.store.findByEmail(data.email);
-    if (user) {
-      if (user.providerId !== provider.providerId) {
-        throw new Error("auth/account-exists-with-different-credential");
-      }
-
-      return this.signIn(user);
-    }
-
-    user = this.store.add({ ...data, providerId: provider.providerId });
-    return this.signIn(user);
-  }
-
   signInWithCredential(credential: firebase.auth.AuthCredential): Promise<any> {
     throw new Error("Method not implemented.");
   }
@@ -156,12 +130,34 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  signInWithPopup(provider: firebase.auth.AuthProvider): Promise<User> {
-    return this.signInSocially(provider);
+  async signInWithPopup(provider: firebase.auth.AuthProvider): Promise<User> {
+    const mock = Array.from(this.socialSignIns.values()).find(
+      mock => mock.type === provider.providerId
+    );
+
+    if (!mock) {
+      throw new Error("No mock response set.");
+    }
+
+    // Mock is used, then it must go
+    this.socialSignIns.delete(mock);
+
+    const data = await mock.response;
+    let user = this.store.findByEmail(data.email);
+    if (user) {
+      if (user.providerId !== provider.providerId) {
+        throw new Error("auth/account-exists-with-different-credential");
+      }
+
+      return this.signIn(user);
+    }
+
+    user = this.store.add({ ...data, providerId: provider.providerId });
+    return this.signIn(user);
   }
 
   signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<User> {
-    return this.signInSocially(provider);
+    throw new Error("Method not implemented.");
   }
 
   signOut(): Promise<void> {
