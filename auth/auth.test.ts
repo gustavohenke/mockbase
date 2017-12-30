@@ -92,6 +92,30 @@ describe("#signInWithPopup()", () => {
     const promise = auth.signInWithPopup(provider);
     return expect(promise).rejects.toThrow("auth/unauthorized-domain");
   });
+
+  it("signs in again using same provider", async () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+
+    const user1 = await auth.signInWithPopup(provider);
+    const user2 = await auth.signInWithPopup(provider);
+    expect(user1).toEqual(user2);
+    expect(auth.currentUser).toBe(user2);
+  });
+
+  it("throws if email already exists for another account", () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.createUserWithEmailAndPassword("foo@bar.com", "baz");
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+
+    const promise = auth.signInWithPopup(provider);
+    return expect(promise).rejects.toThrow("auth/account-exists-with-different-credential");
+  });
 });
 
 describe("#signInWithRedirect()", () => {
@@ -116,5 +140,29 @@ describe("#signInWithRedirect()", () => {
 
     const promise = auth.signInWithRedirect(provider);
     return expect(promise).rejects.toThrow("auth/unauthorized-domain");
+  });
+
+  it("signs in again using same provider", async () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+
+    const user1 = await auth.signInWithRedirect(provider);
+    const user2 = await auth.signInWithRedirect(provider);
+    expect(user1).toEqual(user2);
+    expect(auth.currentUser).toBe(user2);
+  });
+
+  it("throws if email already exists for another account", () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.createUserWithEmailAndPassword("foo@bar.com", "baz");
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+
+    const promise = auth.signInWithRedirect(provider);
+    return expect(promise).rejects.toThrow("auth/account-exists-with-different-credential");
   });
 });
