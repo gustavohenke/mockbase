@@ -78,8 +78,8 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  setPersistence(persistence: string): Promise<any> {
-    throw new Error("Method not implemented.");
+  setPersistence(persistence: string): Promise<void> {
+    return Promise.resolve();
   }
 
   private signIn(user: User): Promise<User> {
