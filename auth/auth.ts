@@ -4,11 +4,14 @@ import { SocialSignInMock } from "./social-signin-mock";
 import { User } from "./user";
 import { UserStore } from "./user-store";
 
+type AuthStateChangeListener = (user: firebase.User | null) => void;
+
 export class MockAuth implements firebase.auth.Auth {
   public currentUser: firebase.User | null = null;
   public languageCode: string | null = null;
   public readonly store = new UserStore();
   private readonly socialSignIns = new Set<SocialSignInMock>();
+  private readonly authStateEvents = new Set();
 
   constructor(public readonly app: MockApp) {}
 
@@ -44,11 +47,16 @@ export class MockAuth implements firebase.auth.Auth {
   }
 
   onAuthStateChanged(
-    nextOrObserver: firebase.Observer<any, any> | ((a: firebase.User | null) => void),
+    nextOrObserver: AuthStateChangeListener,
     error?: (a: firebase.auth.Error) => void,
     completed?: firebase.Unsubscribe
   ): firebase.Unsubscribe {
-    throw new Error("Method not implemented.");
+    this.authStateEvents.add(nextOrObserver);
+    nextOrObserver(this.currentUser);
+
+    return () => {
+      this.authStateEvents.delete(nextOrObserver);
+    };
   }
 
   onIdTokenChanged(
@@ -72,6 +80,10 @@ export class MockAuth implements firebase.auth.Auth {
 
   private signIn(user: User): Promise<User> {
     this.currentUser = user;
+    this.authStateEvents.forEach(listener => {
+      listener(user);
+    });
+
     return Promise.resolve(user);
   }
 
@@ -85,8 +97,7 @@ export class MockAuth implements firebase.auth.Auth {
     }
 
     const user = this.store.add({ isAnonymous: true });
-    this.currentUser = user;
-    return Promise.resolve(user);
+    return this.signIn(user);
   }
 
   private async signInSocially(provider: firebase.auth.AuthProvider): Promise<User> {
@@ -131,8 +142,7 @@ export class MockAuth implements firebase.auth.Auth {
       return Promise.reject(new Error("auth/wrong-password"));
     }
 
-    this.currentUser = user;
-    return Promise.resolve(user);
+    return this.signIn(user);
   }
 
   signInWithPhoneNumber(

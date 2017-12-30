@@ -25,6 +25,27 @@ describe("#createUserWithEmailAndPassword()", () => {
   });
 });
 
+describe("#onAuthStateChange()", () => {
+  it("invokes listener right away with current status", async () => {
+    const auth = new MockAuth(app);
+    const listener = jest.fn();
+
+    const user = await auth.signInAnonymously();
+    auth.onAuthStateChanged(listener);
+
+    expect(listener).toHaveBeenCalledWith(user);
+  });
+
+  it("adds a listener to auth state changes", async () => {
+    const auth = new MockAuth(app);
+    const listener = jest.fn();
+    auth.onAuthStateChanged(listener);
+
+    const user = await auth.signInAnonymously();
+    expect(listener).toHaveBeenCalledWith(user);
+  });
+});
+
 describe("#signInAnonymously()", () => {
   it("signs in and returns user", async () => {
     const auth = new MockAuth(app);
