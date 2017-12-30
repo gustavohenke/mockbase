@@ -1,3 +1,4 @@
+import * as firebase from "firebase";
 import { MockApp } from "../app";
 import { MockAuth } from "./";
 
@@ -65,5 +66,55 @@ describe("#signInWithEmailAndPassword", () => {
     const user2 = await auth.signInWithEmailAndPassword("foo@bar.com", "baz");
     expect(user2).toEqual(user1);
     expect(auth.currentUser).toEqual(user2);
+  });
+});
+
+describe("#signInWithPopup()", () => {
+  it("responds with user mock", async () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+
+    const user = await auth.signInWithPopup(provider);
+    expect(auth.currentUser).toBe(user);
+    expect(user).toHaveProperty("displayName", "Foo");
+    expect(user).toHaveProperty("email", "foo@bar.com");
+    expect(user).toHaveProperty("providerId", provider.providerId);
+  });
+
+  it("responds with error mock", () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.mockSocialSignIn(provider).respondWithError("auth/unauthorized-domain");
+
+    const promise = auth.signInWithPopup(provider);
+    return expect(promise).rejects.toThrow("auth/unauthorized-domain");
+  });
+});
+
+describe("#signInWithRedirect()", () => {
+  it("responds with user mock", async () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
+
+    const user = await auth.signInWithRedirect(provider);
+    expect(auth.currentUser).toBe(user);
+    expect(user).toHaveProperty("displayName", "Foo");
+    expect(user).toHaveProperty("email", "foo@bar.com");
+    expect(user).toHaveProperty("providerId", provider.providerId);
+  });
+
+  it("responds with error mock", () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+
+    const auth = new MockAuth(app);
+    auth.mockSocialSignIn(provider).respondWithError("auth/unauthorized-domain");
+
+    const promise = auth.signInWithRedirect(provider);
+    return expect(promise).rejects.toThrow("auth/unauthorized-domain");
   });
 });

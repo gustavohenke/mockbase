@@ -1,5 +1,6 @@
 import * as firebase from "firebase";
 import { MockApp } from "../app";
+import { SocialSignInMock } from "./social-signin-mock";
 import { User } from "./user";
 import { UserStore } from "./user-store";
 
@@ -7,6 +8,7 @@ export class MockAuth implements firebase.auth.Auth {
   public currentUser: firebase.User | null = null;
   public languageCode: string | null = null;
   public readonly store = new UserStore();
+  private readonly socialSignIns = new Set<SocialSignInMock>();
 
   constructor(public readonly app: MockApp) {}
 
@@ -33,6 +35,12 @@ export class MockAuth implements firebase.auth.Auth {
 
   getRedirectResult(): Promise<any> {
     throw new Error("Method not implemented.");
+  }
+
+  mockSocialSignIn(provider: firebase.auth.AuthProvider) {
+    const mock = new SocialSignInMock(provider.providerId);
+    this.socialSignIns.add(mock);
+    return mock;
   }
 
   onAuthStateChanged(
@@ -62,6 +70,11 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
+  private signIn(user: User): Promise<User> {
+    this.currentUser = user;
+    return Promise.resolve(user);
+  }
+
   signInAndRetrieveDataWithCredential(credential: firebase.auth.AuthCredential): Promise<any> {
     throw new Error("Method not implemented.");
   }
@@ -74,6 +87,32 @@ export class MockAuth implements firebase.auth.Auth {
     const user = this.store.add({ isAnonymous: true });
     this.currentUser = user;
     return Promise.resolve(user);
+  }
+
+  private async signInSocially(provider: firebase.auth.AuthProvider): Promise<User> {
+    const mock = Array.from(this.socialSignIns.values()).find(
+      mock => mock.type === provider.providerId
+    );
+
+    if (!mock) {
+      throw new Error("No mock response set.");
+    }
+
+    // Mock is used, then it must go
+    this.socialSignIns.delete(mock);
+
+    const data = await mock.response;
+    let user = this.store.findByEmail(data.email);
+    if (user) {
+      if (user.providerId !== provider.providerId) {
+        throw new Error("auth/account-exists-with-different-credential");
+      }
+
+      return this.signIn(user);
+    }
+
+    user = this.store.add({ ...data, providerId: provider.providerId });
+    return this.signIn(user);
   }
 
   signInWithCredential(credential: firebase.auth.AuthCredential): Promise<any> {
@@ -103,12 +142,12 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  signInWithPopup(provider: firebase.auth.AuthProvider): Promise<any> {
-    throw new Error("Method not implemented.");
+  signInWithPopup(provider: firebase.auth.AuthProvider): Promise<User> {
+    return this.signInSocially(provider);
   }
 
-  signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<any> {
-    throw new Error("Method not implemented.");
+  signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<User> {
+    return this.signInSocially(provider);
   }
 
   signOut(): Promise<any> {
