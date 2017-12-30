@@ -7,7 +7,7 @@ import { UserStore } from "./user-store";
 type AuthStateChangeListener = (user: firebase.User | null) => void;
 
 export class MockAuth implements firebase.auth.Auth {
-  public currentUser: firebase.User | null = null;
+  public currentUser: User | null = null;
   public languageCode: string | null = null;
   public readonly store = new UserStore();
   private readonly socialSignIns = new Set<SocialSignInMock>();
