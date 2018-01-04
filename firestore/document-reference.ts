@@ -1,6 +1,7 @@
 import * as firebase from "firebase";
 import { CollectionReference } from "./collection-reference";
 import { DataContainer } from "./data-container";
+import { DocumentSnapshot } from "./document-snapshot";
 import { MockFirestore } from "./firestore";
 
 export class DocumentReference
@@ -56,7 +57,7 @@ export class DocumentReference
   }
 
   get(): Promise<firebase.firestore.DocumentSnapshot> {
-    throw new Error("Method not implemented.");
+    return Promise.resolve(new DocumentSnapshot(this, Object.assign({}, this.data)));
   }
 
   onSnapshot(observer: {

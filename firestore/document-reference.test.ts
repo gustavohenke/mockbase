@@ -30,6 +30,20 @@ it("shares same data as other instances", async () => {
   expect(doc1.data).toEqual(doc2.data);
 });
 
+describe("#get()", () => {
+  it("instantiates a snapshot with the current data", async () => {
+    const ref = firestore.doc("foo/bar");
+    ref.set({ foo: "bar" });
+
+    const doc = await ref.get();
+    expect(doc).toHaveProperty("ref", ref);
+    expect(doc.data()).toEqual({ foo: "bar" });
+
+    ref.set({ bar: "baz" });
+    expect(doc.data()).toEqual({ foo: "bar" });
+  });
+});
+
 describe("#set()", () => {
   it("overwrites current data by default", async () => {
     const doc = firestore.doc("foo/bar");
