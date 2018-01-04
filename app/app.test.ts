@@ -1,5 +1,6 @@
 import { MockApp } from "./app";
-import { MockAuth } from "../auth/auth";
+import { MockAuth } from "../auth";
+import { MockFirestore } from "../firestore";
 
 it("exposes name and options", () => {
   const app = new MockApp("foo", { bar: "baz" });
@@ -15,5 +16,16 @@ describe("#auth()", () => {
     expect(auth).toBeInstanceOf(MockAuth);
     expect(auth.app).toBe(app);
     expect(app.auth()).toBe(auth);
+  });
+});
+
+describe("#firestore()", () => {
+  it("builds and caches MockFirestore instance", () => {
+    const app = new MockApp("app");
+    const firestore = app.firestore();
+
+    expect(firestore).toBeInstanceOf(MockFirestore);
+    expect(firestore.app).toBe(app);
+    expect(app.firestore()).toBe(firestore);
   });
 });
