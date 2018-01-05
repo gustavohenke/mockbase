@@ -33,13 +33,13 @@ it("shares same data as other instances", async () => {
 describe("#get()", () => {
   it("instantiates a snapshot with the current data", async () => {
     const ref = firestore.doc("foo/bar");
-    ref.set({ foo: "bar" });
+    await ref.set({ foo: "bar" });
 
     const doc = await ref.get();
     expect(doc).toHaveProperty("ref", ref);
     expect(doc.data()).toEqual({ foo: "bar" });
 
-    ref.set({ bar: "baz" });
+    await ref.set({ bar: "baz" });
     expect(doc.data()).toEqual({ foo: "bar" });
   });
 });
