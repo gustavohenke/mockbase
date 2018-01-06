@@ -1,12 +1,19 @@
 import * as firebase from "firebase";
+import { EventEmitter } from "../util";
 import { CollectionReference } from "./collection-reference";
 import { DataContainer } from "./data-container";
 import { DocumentSnapshot } from "./document-snapshot";
 import { MockFirestore } from "./firestore";
 
+export const SNAPSHOT_NEXT_EVENT = "snapshot:next";
+export const SNAPSHOT_ERROR_EVENT = "snapshot:error";
+export const SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
+
 export class DocumentReference
   implements firebase.firestore.DocumentReference, DataContainer<CollectionReference> {
   public readonly children: Map<string, CollectionReference>;
+
+  private readonly emitter = new EventEmitter();
 
   public get data(): {} {
     return this.firestore.data.get(this.path) || {};
@@ -45,7 +52,7 @@ export class DocumentReference
     options: firebase.firestore.SetOptions | undefined = {}
   ): Promise<void> {
     this.firestore.data.set(this.path, Object.assign(options.merge ? this.data : {}, data));
-    return Promise.resolve();
+    return this.get().then(snapshot => this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]));
   }
 
   update(data: any): Promise<void> {
@@ -89,6 +96,30 @@ export class DocumentReference
   ): () => void;
 
   onSnapshot(options: any, onNext?: any, onError?: any, onCompletion?: any): () => void {
-    throw new Error("Method not implemented.");
+    let actualListeners: any = {};
+
+    if (typeof options === "object") {
+      if (typeof onNext === "object") {
+        actualListeners = onNext;
+      } else if (typeof onNext === "function") {
+        actualListeners.next = onNext;
+        actualListeners.error = onError;
+      } else {
+        actualListeners = options;
+      }
+    } else {
+      actualListeners.next = options;
+      actualListeners.error = onNext;
+    }
+
+    this.emitter.on(SNAPSHOT_NEXT_EVENT, actualListeners.next);
+    this.emitter.on(SNAPSHOT_ERROR_EVENT, actualListeners.error);
+
+    this.get().then(snapshot => this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]));
+
+    return () => {
+      this.emitter.off(SNAPSHOT_NEXT_EVENT, actualListeners.next);
+      this.emitter.off(SNAPSHOT_ERROR_EVENT, actualListeners.error);
+    };
   }
 }

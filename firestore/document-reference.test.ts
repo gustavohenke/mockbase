@@ -1,6 +1,6 @@
 import { createMockInstance } from "jest-create-mock-instance";
 import { MockApp } from "../app";
-import { MockFirestore } from "./";
+import { MockFirestore, DocumentReference } from "./";
 
 let firestore: MockFirestore;
 beforeEach(() => {
@@ -42,6 +42,47 @@ describe("#get()", () => {
     await ref.set({ bar: "baz" });
     expect(doc.data()).toEqual({ foo: "bar" });
   });
+});
+
+describe("#onSnapshot()", () => {
+  const createTests = (executor: (doc: DocumentReference, onNext: any) => () => void) => () => {
+    it("sets onNext and emits it right away", () => {
+      const doc = firestore.doc("foo/bar");
+
+      const onNext = jest.fn();
+      executor(doc, onNext);
+
+      return doc.get().then(snapshot => {
+        expect(onNext).toHaveBeenCalledWith(snapshot);
+      });
+    });
+
+    it("unsets the onNext listener on disposal", () => {
+      const doc = firestore.doc("foo/bar");
+
+      const onNext = jest.fn();
+      const disposer = executor(doc, onNext);
+      disposer();
+
+      return doc.get().then(snapshot => {
+        expect(onNext).not.toHaveBeenCalled();
+      });
+    });
+  };
+
+  describe("with listener args", createTests((doc, onNext) => doc.onSnapshot(onNext)));
+
+  describe(
+    "with options + listener args",
+    createTests((doc, onNext) => doc.onSnapshot({}, onNext))
+  );
+
+  describe("with observer arg", createTests((doc, onNext) => doc.onSnapshot({ next: onNext })));
+
+  describe(
+    "with options + observer args",
+    createTests((doc, onNext) => doc.onSnapshot({}, { next: onNext }))
+  );
 });
 
 describe("#set()", () => {
