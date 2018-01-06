@@ -106,4 +106,16 @@ describe("#set()", () => {
       bar: "baz"
     });
   });
+
+  it("emits snapshot events", async () => {
+    const doc = firestore.doc("foo/bar");
+
+    const onNext = jest.fn();
+    doc.onSnapshot(onNext);
+
+    await doc.set({ bla: "blabla" });
+
+    // 1 for the snapshot setting, 1 for the set value
+    expect(onNext).toHaveBeenCalledTimes(2);
+  });
 });
