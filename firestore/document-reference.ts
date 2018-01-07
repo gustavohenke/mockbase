@@ -63,7 +63,7 @@ export class DocumentReference
     throw new Error("Method not implemented.");
   }
 
-  get(): Promise<firebase.firestore.DocumentSnapshot> {
+  get(): Promise<DocumentSnapshot> {
     return Promise.resolve(new DocumentSnapshot(this, Object.assign({}, this.data)));
   }
 
