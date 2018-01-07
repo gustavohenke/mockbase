@@ -34,7 +34,7 @@ describe("#forEach()", () => {
 
     query.forEach(callback);
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenCalledWith(docs[0]);
-    expect(callback).toHaveBeenCalledWith(docs[1]);
+    expect(callback).toHaveBeenCalledWith(docs[0], 0, docs);
+    expect(callback).toHaveBeenCalledWith(docs[1], 1, docs);
   });
 });
