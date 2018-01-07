@@ -1,5 +1,5 @@
 import * as firebase from "firebase";
-import { MockFirestore } from "./";
+import { MockFirestore, Query } from "./";
 import { DocumentReference } from "./document-reference";
 import { DataContainer } from "./data-container";
 
@@ -33,57 +33,61 @@ export class CollectionReference
   doc(documentPath?: string | undefined): DocumentReference {
     return new DocumentReference(this.firestore, documentPath || this.firestore.nextId(), this);
   }
+
   add(data: firebase.firestore.DocumentData): Promise<DocumentReference> {
     const doc = this.doc();
     return doc.set(data).then(() => doc);
   }
+
   where(
     fieldPath: string | firebase.firestore.FieldPath,
     opStr: firebase.firestore.WhereFilterOp,
     value: any
   ): firebase.firestore.Query {
-    throw new Error("Method not implemented.");
+    return new Query(this).where(fieldPath, opStr, value);
   }
+
   orderBy(
     fieldPath: string | firebase.firestore.FieldPath,
     directionStr?: "desc" | "asc" | undefined
   ): firebase.firestore.Query {
-    throw new Error("Method not implemented.");
+    return new Query(this).orderBy(fieldPath, directionStr);
   }
 
   limit(limit: number): firebase.firestore.Query {
-    throw new Error("Method not implemented.");
+    return new Query(this).limit(limit);
   }
 
   startAt(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
   startAt(...fieldValues: any[]): firebase.firestore.Query;
   startAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
-    throw new Error("Method not implemented.");
+    return new Query(this).startAt(snapshot, ...rest);
   }
 
   startAfter(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
   startAfter(...fieldValues: any[]): firebase.firestore.Query;
   startAfter(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
-    throw new Error("Method not implemented.");
+    return new Query(this).startAfter(snapshot, ...rest);
   }
 
   endBefore(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
   endBefore(...fieldValues: any[]): firebase.firestore.Query;
   endBefore(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
-    throw new Error("Method not implemented.");
+    return new Query(this).endBefore(snapshot, ...rest);
   }
 
   endAt(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
   endAt(...fieldValues: any[]): firebase.firestore.Query;
   endAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
-    throw new Error("Method not implemented.");
+    return new Query(this).endAt(snapshot, ...rest);
   }
 
   isEqual(other: firebase.firestore.Query): boolean {
     throw new Error("Method not implemented.");
   }
+
   get(): Promise<firebase.firestore.QuerySnapshot> {
-    throw new Error("Method not implemented.");
+    return new Query(this).get();
   }
 
   onSnapshot(observer: {
@@ -115,6 +119,6 @@ export class CollectionReference
   ): () => void;
 
   onSnapshot(options: any, onNext?: any, onError?: any, onCompletion?: any): () => void {
-    throw new Error("Method not implemented.");
+    return new Query(this).onSnapshot(options, onNext, onError, onCompletion);
   }
 }
