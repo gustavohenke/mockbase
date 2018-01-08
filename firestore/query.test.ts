@@ -11,6 +11,32 @@ it("exposes #firestore", () => {
   expect(query.firestore).toBe(coll.firestore);
 });
 
+describe("#orderBy()", () => {
+  it("orders by insertion order by default", async () => {
+    const doc1 = await coll.add({ foo: "bar" });
+    const doc2 = await coll.add({ bar: "baz" });
+
+    const snapshot = await new Query(coll).get();
+    expect(snapshot.docs).toEqual([await doc1.get(), await doc2.get()]);
+  });
+
+  it("orders by a given field by asc", async () => {
+    const doc1 = await coll.add({ foo: 100 });
+    const doc2 = await coll.add({ foo: 50 });
+
+    const snapshot = await new Query(coll).orderBy("foo", "asc").get();
+    expect(snapshot.docs).toEqual([await doc2.get(), await doc1.get()]);
+  });
+
+  it("orders by a given field by desc", async () => {
+    const doc1 = await coll.add({ foo: 50 });
+    const doc2 = await coll.add({ foo: 100 });
+
+    const snapshot = await new Query(coll).orderBy("foo", "desc").get();
+    expect(snapshot.docs).toEqual([await doc2.get(), await doc1.get()]);
+  });
+});
+
 describe("#where()", () => {
   it("adds a == query", async () => {
     const doc1 = await coll.add({ foo: "bar" });
