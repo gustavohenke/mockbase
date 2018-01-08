@@ -1,8 +1,8 @@
 import * as firebase from "firebase";
+import { EventEmitter } from "../util";
 import { MockFirestore, Query } from "./";
 import { DocumentReference } from "./document-reference";
 import { DataContainer } from "./data-container";
-import { EventEmitter } from "events";
 
 export const COLLECTION_CHANGE_EVENT = "change";
 
@@ -10,7 +10,9 @@ export class CollectionReference
   implements firebase.firestore.CollectionReference, DataContainer<DocumentReference> {
   public readonly children: Map<string, DocumentReference>;
 
-  public readonly emitter = new EventEmitter();
+  get emitter() {
+    return this.firestore.collectionEvents.get(this.path)!;
+  }
 
   get path(): string {
     const parent = this.parent ? this.parent.path : "";
@@ -33,6 +35,10 @@ export class CollectionReference
     }
 
     this.children = ref.children;
+
+    if (!this.firestore.collectionEvents.has(this.path)) {
+      this.firestore.collectionEvents.set(this.path, new EventEmitter());
+    }
   }
 
   doc(documentPath?: string | undefined): DocumentReference {

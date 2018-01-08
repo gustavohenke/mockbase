@@ -1,5 +1,6 @@
 import * as firebase from "firebase";
 import { MockApp } from "../app";
+import { EventEmitter } from "../util";
 import { CollectionReference } from "./collection-reference";
 import { DataContainer } from "./data-container";
 import { DocumentReference } from "./document-reference";
@@ -12,6 +13,7 @@ export class MockFirestore
   private id = 0;
   public readonly children = new Map<string, CollectionReference>();
   public readonly data = new Map<string, {}>();
+  public readonly collectionEvents = new Map<string, EventEmitter>();
 
   constructor(public readonly app: MockApp) {}
 

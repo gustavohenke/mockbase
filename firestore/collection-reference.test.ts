@@ -34,6 +34,19 @@ it("sets data into parent", () => {
   expect(bar.children.get("baz")).toBe(baz);
 });
 
+it("shares event listeners with other collections", async () => {
+  const foo1 = firestore.collection("foo");
+  const foo2 = firestore.collection("foo");
+
+  const listener = jest.fn();
+  foo1.onSnapshot(listener);
+
+  await foo2.add({ x: 100 });
+  await flushPromises();
+
+  expect(listener).toHaveBeenCalledTimes(2);
+});
+
 describe("#add()", () => {
   it("creates a doc with a random ID", async () => {
     const coll = firestore.collection("foo");
