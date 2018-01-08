@@ -1,0 +1,10 @@
+# Build files
+*.ts
+!*.d.ts
+*.test.*
+
+# Misc
+/coverage
+.prettierrc
+.editorconfig
+.travis.yml
