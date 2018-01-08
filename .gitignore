@@ -7,3 +7,6 @@ npm-debug.log*
 *.js.map
 *.d.ts
 /coverage
+
+# Misc
+.DS_Store
