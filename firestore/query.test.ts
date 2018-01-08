@@ -11,6 +11,24 @@ it("exposes #firestore", () => {
   expect(query.firestore).toBe(coll.firestore);
 });
 
+describe("#limit()", () => {
+  it("doesn't limit by default", async () => {
+    const doc1 = await coll.add({ foo: "bar" });
+    const doc2 = await coll.add({ bar: "baz" });
+
+    const snapshot = await new Query(coll).get();
+    expect(snapshot.docs).toHaveLength(2);
+  });
+
+  it("limits by set value", async () => {
+    const doc1 = await coll.add({ foo: "bar" });
+    const doc2 = await coll.add({ bar: "baz" });
+
+    const snapshot = await new Query(coll).limit(1).get();
+    expect(snapshot.docs).toHaveLength(1);
+  });
+});
+
 describe("#orderBy()", () => {
   it("orders by insertion order by default", async () => {
     const doc1 = await coll.add({ foo: "bar" });
