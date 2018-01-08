@@ -11,9 +11,9 @@ interface Ordering {
   direction: "asc" | "desc";
 }
 
-export const SNAPSHOT_NEXT_EVENT = "snapshot:next";
-export const SNAPSHOT_ERROR_EVENT = "snapshot:error";
-export const SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
+export const QUERY_SNAPSHOT_NEXT_EVENT = "snapshot:next";
+export const QUERY_SNAPSHOT_ERROR_EVENT = "snapshot:error";
+export const QUERY_SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
 
 export class Query implements firebase.firestore.Query {
   get firestore() {
@@ -171,12 +171,12 @@ export class Query implements firebase.firestore.Query {
       actualListeners.error = onNext;
     }
 
-    this.emitter.on(SNAPSHOT_NEXT_EVENT, actualListeners.next);
-    this.emitter.on(SNAPSHOT_ERROR_EVENT, actualListeners.error);
+    this.emitter.on(QUERY_SNAPSHOT_NEXT_EVENT, actualListeners.next);
+    this.emitter.on(QUERY_SNAPSHOT_ERROR_EVENT, actualListeners.error);
 
     return () => {
-      this.emitter.off(SNAPSHOT_NEXT_EVENT, actualListeners.next);
-      this.emitter.off(SNAPSHOT_ERROR_EVENT, actualListeners.error);
+      this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, actualListeners.next);
+      this.emitter.off(QUERY_SNAPSHOT_ERROR_EVENT, actualListeners.error);
     };
   }
 }
