@@ -1,6 +1,7 @@
 import { createMockInstance } from "jest-create-mock-instance";
-import { MockFirestore } from "./";
+import { MockFirestore, QuerySnapshot } from "./";
 import { MockApp } from "../app";
+import { flushPromises } from "../util/index";
 
 let firestore: MockFirestore;
 beforeEach(() => {
@@ -69,5 +70,78 @@ describe("#doc()", () => {
 
     const doc = coll.doc();
     expect(doc).toHaveProperty("id", "__id0");
+  });
+});
+
+describe("#get()", () => {
+  it("gets a query snapshot", async () => {
+    const coll = firestore.collection("foo");
+    await coll.add({ x: 5 });
+    await coll.add({ x: 1 });
+
+    const snapshot = await coll.get();
+    expect(snapshot.docs).toHaveLength(2);
+  });
+});
+
+describe("#onSnapshot()", () => {
+  it("listens to snapshot events", async () => {
+    const coll = firestore.collection("foo");
+    const onNext = jest.fn();
+    coll.onSnapshot(onNext);
+
+    await flushPromises();
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(onNext).toHaveBeenCalledWith(expect.any(QuerySnapshot));
+  });
+
+  it("returns snapshot event disposer", async () => {
+    const coll = firestore.collection("foo");
+
+    const onNext = jest.fn();
+    const disposer = coll.onSnapshot(onNext);
+    disposer();
+
+    await coll.add({});
+    await flushPromises();
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("#where()", () => {
+  it("creates new query with given filter", async () => {
+    const coll = firestore.collection("foo");
+    await coll.add({ x: 5 });
+
+    const query = coll.where("x", "==", 1);
+    const snapshot = await query.get();
+
+    expect(snapshot.docs).toHaveLength(0);
+  });
+});
+
+describe("#orderBy()", () => {
+  it("creates new query with given ordering", async () => {
+    const coll = firestore.collection("foo");
+    const doc1 = await coll.add({ x: 5 });
+    const doc2 = await coll.add({ x: 1 });
+
+    const query = coll.orderBy("x");
+    const snapshot = await query.get();
+
+    expect(snapshot.docs).toEqual([await doc2.get(), await doc1.get()]);
+  });
+});
+
+describe("#limit()", () => {
+  it("creates new query with given limit", async () => {
+    const coll = firestore.collection("foo");
+    await coll.add({ x: 5 });
+    await coll.add({ x: 1 });
+
+    const query = coll.limit(1);
+    const snapshot = await query.get();
+
+    expect(snapshot.docs).toHaveLength(1);
   });
 });
