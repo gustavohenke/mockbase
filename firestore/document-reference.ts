@@ -40,7 +40,7 @@ export class DocumentReference
   }
 
   collection(collectionPath: string): CollectionReference {
-    return new CollectionReference(this.firestore, this.id, this);
+    return new CollectionReference(this.firestore, collectionPath, this);
   }
 
   isEqual(other: firebase.firestore.DocumentReference): boolean {

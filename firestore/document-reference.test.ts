@@ -30,6 +30,13 @@ it("shares same data as other instances", async () => {
   expect(doc1.data).toEqual(doc2.data);
 });
 
+describe("#collection()", () => {
+  it("returns child collection", () => {
+    const doc = firestore.doc("foo/bar");
+    expect(doc.collection("baz").path).toEqual("/foo/bar/baz");
+  });
+});
+
 describe("#get()", () => {
   it("instantiates a snapshot with the current data", async () => {
     const ref = firestore.doc("foo/bar");
