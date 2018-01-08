@@ -1,6 +1,6 @@
 import { createMockInstance } from "jest-create-mock-instance";
 import { MockApp } from "../app";
-import { MockFirestore, DocumentReference } from "./";
+import { MockFirestore, DocumentReference, COLLECTION_CHANGE_EVENT } from "./";
 
 let firestore: MockFirestore;
 beforeEach(() => {
@@ -117,5 +117,17 @@ describe("#set()", () => {
 
     // 1 for the snapshot setting, 1 for the set value
     expect(onNext).toHaveBeenCalledTimes(2);
+  });
+
+  it("emits change events on the parent collection", async () => {
+    const coll = firestore.collection("foo");
+
+    const listener = jest.fn();
+    coll.emitter.on(COLLECTION_CHANGE_EVENT, listener);
+
+    const doc = coll.doc("bar");
+    await doc.set({ bla: "blabla" });
+
+    expect(listener).toHaveBeenCalled();
   });
 });

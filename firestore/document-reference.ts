@@ -1,6 +1,6 @@
 import * as firebase from "firebase";
 import { EventEmitter } from "../util";
-import { CollectionReference } from "./collection-reference";
+import { COLLECTION_CHANGE_EVENT, CollectionReference } from "./collection-reference";
 import { DataContainer } from "./data-container";
 import { DocumentSnapshot } from "./document-snapshot";
 import { MockFirestore } from "./firestore";
@@ -52,7 +52,10 @@ export class DocumentReference
     options: firebase.firestore.SetOptions | undefined = {}
   ): Promise<void> {
     this.firestore.data.set(this.path, Object.assign(options.merge ? this.data : {}, data));
-    return this.get().then(snapshot => this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]));
+    return this.get().then(snapshot => {
+      this.parent.emitter.emit(COLLECTION_CHANGE_EVENT);
+      this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]);
+    });
   }
 
   update(data: any): Promise<void> {
