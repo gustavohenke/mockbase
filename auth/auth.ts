@@ -4,7 +4,7 @@ import { SocialSignInMock } from "./social-signin-mock";
 import { User } from "./user";
 import { UserStore } from "./user-store";
 
-type AuthStateChangeListener = (user: firebase.User | null) => void;
+export type AuthStateChangeListener = (user: firebase.User | null) => void;
 
 export class MockAuth implements firebase.auth.Auth {
   public currentUser: User | null = null;

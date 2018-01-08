@@ -1,4 +1,4 @@
-type Errors =
+export type Errors =
   | "auth/auth-domain-config-required"
   | "auth/cancelled-popup-request"
   | "auth/operation-not-supported-in-this-environment"

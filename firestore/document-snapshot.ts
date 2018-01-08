@@ -1,11 +1,12 @@
 import * as firebase from "firebase";
 import { DocumentReference } from "./document-reference";
+import { MockFirestore } from "./firestore";
 
 export class DocumentSnapshot implements firebase.firestore.DocumentSnapshot {
   exists: boolean;
   metadata: firebase.firestore.SnapshotMetadata;
 
-  get firestore() {
+  get firestore(): MockFirestore {
     return this.ref.firestore;
   }
 

@@ -1,4 +1,4 @@
-interface Listener {
+export interface Listener {
   (...args: any[]): void;
 }
 

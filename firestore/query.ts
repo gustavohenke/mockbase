@@ -1,6 +1,12 @@
 import * as firebase from "firebase";
 import { EventEmitter } from "../util";
-import { COLLECTION_CHANGE_EVENT, CollectionReference, DocumentSnapshot, QuerySnapshot } from "./";
+import {
+  COLLECTION_CHANGE_EVENT,
+  CollectionReference,
+  DocumentSnapshot,
+  QuerySnapshot,
+  MockFirestore
+} from "./";
 
 interface QueryFilter {
   (doc: DocumentSnapshot): boolean;
@@ -16,7 +22,7 @@ export const QUERY_SNAPSHOT_ERROR_EVENT = "snapshot:error";
 export const QUERY_SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
 
 export class Query implements firebase.firestore.Query {
-  get firestore() {
+  get firestore(): MockFirestore {
     return this.collection.firestore;
   }
 
