@@ -2,10 +2,15 @@ import * as firebase from "firebase";
 import { MockFirestore, Query } from "./";
 import { DocumentReference } from "./document-reference";
 import { DataContainer } from "./data-container";
+import { EventEmitter } from "events";
+
+export const COLLECTION_CHANGE_EVENT = "change";
 
 export class CollectionReference
   implements firebase.firestore.CollectionReference, DataContainer<DocumentReference> {
   public readonly children: Map<string, DocumentReference>;
+
+  public readonly emitter = new EventEmitter();
 
   get path(): string {
     const parent = this.parent ? this.parent.path : "";

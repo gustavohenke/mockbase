@@ -1,5 +1,6 @@
 import { MockApp } from "../app";
-import { CollectionReference, Query } from "./";
+import { flushPromises } from "../util";
+import { COLLECTION_CHANGE_EVENT, CollectionReference, Query, QuerySnapshot } from "./";
 
 let coll: CollectionReference;
 beforeEach(() => {
@@ -9,6 +10,18 @@ beforeEach(() => {
 it("exposes #firestore", () => {
   const query = new Query(coll);
   expect(query.firestore).toBe(coll.firestore);
+});
+
+it("listens to changes to parent collection and emits snapshot events", async () => {
+  const onNext = jest.fn();
+
+  const query = new Query(coll);
+  query.onSnapshot(onNext);
+
+  coll.emitter.emit(COLLECTION_CHANGE_EVENT);
+  await flushPromises();
+
+  expect(onNext).toHaveBeenCalledWith(expect.any(QuerySnapshot));
 });
 
 describe("#limit()", () => {
@@ -117,4 +130,43 @@ describe("#where()", () => {
     expect(snapshot.docs[0]).toEqual(await doc1.get());
     expect(snapshot.docs[1]).toEqual(await doc2.get());
   });
+});
+
+describe("#onSnapshot()", () => {
+  const createTests = (executor: (query: Query, onNext: any) => () => void) => () => {
+    it("sets onNext and emits it right away", async () => {
+      const query = new Query(coll);
+
+      const onNext = jest.fn();
+      executor(query, onNext);
+
+      await flushPromises();
+      expect(onNext).toHaveBeenCalledWith(expect.any(QuerySnapshot));
+    });
+
+    it("unsets the onNext listener on disposal", async () => {
+      const query = new Query(coll);
+
+      const onNext = jest.fn();
+      const disposer = executor(query, onNext);
+      disposer();
+
+      await flushPromises();
+      expect(onNext).toHaveBeenCalledTimes(1);
+    });
+  };
+
+  describe("with listener args", createTests((doc, onNext) => doc.onSnapshot(onNext)));
+
+  describe(
+    "with options + listener args",
+    createTests((doc, onNext) => doc.onSnapshot({}, onNext))
+  );
+
+  describe("with observer arg", createTests((doc, onNext) => doc.onSnapshot({ next: onNext })));
+
+  describe(
+    "with options + observer args",
+    createTests((doc, onNext) => doc.onSnapshot({}, { next: onNext }))
+  );
 });

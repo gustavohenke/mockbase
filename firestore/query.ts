@@ -1,6 +1,6 @@
 import * as firebase from "firebase";
 import { EventEmitter } from "../util";
-import { CollectionReference, DocumentSnapshot, QuerySnapshot } from "./";
+import { COLLECTION_CHANGE_EVENT, CollectionReference, DocumentSnapshot, QuerySnapshot } from "./";
 
 interface QueryFilter {
   (doc: DocumentSnapshot): boolean;
@@ -25,7 +25,12 @@ export class Query implements firebase.firestore.Query {
   private ordering: Ordering;
   private docsLimit = Infinity;
 
-  constructor(private readonly collection: CollectionReference) {}
+  constructor(private readonly collection: CollectionReference) {
+    this.collection.emitter.on(COLLECTION_CHANGE_EVENT, async () => {
+      const snapshot = await this.get();
+      this.emitter.emit(QUERY_SNAPSHOT_NEXT_EVENT, [snapshot]);
+    });
+  }
 
   where(
     fieldPath: string | firebase.firestore.FieldPath,
@@ -173,6 +178,8 @@ export class Query implements firebase.firestore.Query {
 
     this.emitter.on(QUERY_SNAPSHOT_NEXT_EVENT, actualListeners.next);
     this.emitter.on(QUERY_SNAPSHOT_ERROR_EVENT, actualListeners.error);
+
+    this.get().then(snapshot => actualListeners.next(snapshot));
 
     return () => {
       this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, actualListeners.next);
