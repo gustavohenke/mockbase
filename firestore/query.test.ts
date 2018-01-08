@@ -14,7 +14,7 @@ it("exposes #firestore", () => {
 describe("#where()", () => {
   it("adds a == query", async () => {
     const doc1 = await coll.add({ foo: "bar" });
-    const doc2 = await coll.add({ foo: "baz" });
+    await coll.add({ foo: "baz" });
 
     const query = new Query(coll);
     query.where("foo", "==", "bar");
@@ -26,7 +26,7 @@ describe("#where()", () => {
 
   it("adds a > query", async () => {
     const doc1 = await coll.add({ foo: 100 });
-    const doc2 = await coll.add({ foo: 50 });
+    await coll.add({ foo: 50 });
 
     const query = new Query(coll);
     query.where("foo", ">", 50);
@@ -37,7 +37,7 @@ describe("#where()", () => {
   });
 
   it("adds a < query", async () => {
-    const doc1 = await coll.add({ foo: 100 });
+    await coll.add({ foo: 100 });
     const doc2 = await coll.add({ foo: 50 });
 
     const query = new Query(coll);
