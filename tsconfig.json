@@ -8,7 +8,7 @@
       "es7"
     ],
     "sourceMap": true,
-    "allowJs": true,
+    "allowJs": false,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "rootDir": "",
