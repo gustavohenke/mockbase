@@ -3,13 +3,24 @@
 [![Coverage](https://img.shields.io/coveralls/github/gustavohenke/firebase-stub.svg?style=flat-square)](https://coveralls.io/github/gustavohenke/firebase-stub)
 
 ## Auth
-Partly implemented.
+Partly implemented. Missing features:
+
+- Account linking
+- Password reset
+- Phone
+- Reauthentication
+- Social sign in via redirect
 
 ## Database
 Not implemented.
 
 ## Firestore
-Not implemented.
+Partly implemented. Missing features:
+
+- Batch/run in transaction
+- Document deletion
+- Query comparison
+- Start/end querying
 
 ## Messaging
 Not implemented.
