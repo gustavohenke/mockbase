@@ -15,6 +15,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepublish": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch --notify"
   },
