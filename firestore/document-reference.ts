@@ -70,7 +70,10 @@ export class DocumentReference
         return obj[part];
       }, this.data);
     });
-    return Promise.resolve();
+    return this.get().then(snapshot => {
+      this.parent.emitter.emit(COLLECTION_CHANGE_EVENT);
+      this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]);
+    });
   }
 
   delete(): Promise<void> {

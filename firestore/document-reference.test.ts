@@ -168,4 +168,28 @@ describe("#update()", () => {
       qux: false
     });
   });
+
+  it("emits snapshot events", async () => {
+    const doc = firestore.doc("foo/bar");
+    await doc.set({ bla: "blabla" });
+
+    const onNext = jest.fn();
+    doc.onSnapshot(onNext);
+    await doc.update({ bla: "BLA" });
+
+    // 1 for the snapshot setting, 1 for the set value
+    expect(onNext).toHaveBeenCalledTimes(2);
+  });
+
+  it("emits change events on the parent collection", async () => {
+    const coll = firestore.collection("foo");
+    const doc = coll.doc("bar");
+    await doc.set({ bla: "blabla" });
+
+    const listener = jest.fn();
+    coll.emitter.on(COLLECTION_CHANGE_EVENT, listener);
+    await doc.update({ bla: "BLA" });
+
+    expect(listener).toHaveBeenCalled();
+  });
 });
