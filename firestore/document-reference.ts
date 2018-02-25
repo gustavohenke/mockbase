@@ -59,7 +59,18 @@ export class DocumentReference
   }
 
   update(data: any): Promise<void> {
-    throw new Error("Method not implemented.");
+    Object.keys(data).forEach(key => {
+      key.split(".").reduce((obj, part, index, path) => {
+        if (path.length === index + 1) {
+          obj[part] = data[key];
+        } else {
+          obj[part] = typeof obj[part] === "object" ? obj[part] : {};
+        }
+
+        return obj[part];
+      }, this.data);
+    });
+    return Promise.resolve();
   }
 
   delete(): Promise<void> {

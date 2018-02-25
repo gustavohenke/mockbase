@@ -138,3 +138,34 @@ describe("#set()", () => {
     expect(listener).toHaveBeenCalled();
   });
 });
+
+describe("#update()", () => {
+  it("patches existing document data deeply", async () => {
+    const ref = firestore.doc("foo/bar");
+    await ref.set({
+      foo: 123,
+      bar: { bar: 456 },
+      baz: 789,
+      qux: false
+    });
+
+    await ref.update({
+      "foo.foo": "foo",
+      "bar.otherBar": "otherBar",
+      baz: "baz"
+    });
+
+    const doc = await ref.get();
+    expect(doc.data()).toEqual({
+      foo: {
+        foo: "foo"
+      },
+      bar: {
+        bar: 456,
+        otherBar: "otherBar"
+      },
+      baz: "baz",
+      qux: false
+    });
+  });
+});
