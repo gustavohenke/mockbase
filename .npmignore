@@ -5,6 +5,7 @@
 
 # Misc
 /coverage
+/.vscode
 .prettierrc
 .editorconfig
 .travis.yml

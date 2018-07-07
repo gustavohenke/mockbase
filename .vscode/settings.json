@@ -1,0 +1,7 @@
+{
+  "jest.autoEnable": true,
+  "search.useIgnoreFiles": true,
+  "[typescript]": {
+    "editor.formatOnSave": true
+  }
+}
