@@ -23,7 +23,6 @@
   "license": "MIT",
   "jest": {
     "collectCoverage": true,
-    "mapCoverage": true,
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
