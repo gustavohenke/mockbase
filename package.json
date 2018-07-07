@@ -6,6 +6,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/jest": "^23.1.4",
+    "@types/node": "^10.5.2",
     "coveralls": "^3.0.2",
     "firebase": "4.8.0",
     "jest": "^23.3.0",
