@@ -22,6 +22,7 @@
   "repository": "gustavohenke/firebase-stub",
   "license": "MIT",
   "jest": {
+    "testEnvironment": "node",
     "collectCoverage": true,
     "transform": {
       "^.+\\.ts$": "ts-jest"
