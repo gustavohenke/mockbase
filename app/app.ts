@@ -26,7 +26,19 @@ export class MockApp implements firebase.app.App {
     return this.firestoreInstance;
   }
 
+  functions(): firebase.functions.Functions {
+    throw new Error("Not implemented");
+  }
+
+  installations(): firebase.installations.Installations {
+    throw new Error("Not implemented");
+  }
+
   messaging(): firebase.messaging.Messaging {
+    throw new Error("Not implemented");
+  }
+
+  performance(): firebase.performance.Performance {
     throw new Error("Not implemented");
   }
 
