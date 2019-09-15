@@ -14,6 +14,7 @@ export interface UserSchema {
   photoURL: string | null;
   providerId: string;
   uid: string;
+  tenantId: string | null;
 }
 
 export class User implements firebase.User, UserSchema {
@@ -28,6 +29,7 @@ export class User implements firebase.User, UserSchema {
   providerData: (firebase.UserInfo | null)[];
   providerId: string;
   refreshToken: string;
+  tenantId: string | null;
   uid: string;
 
   constructor(data: Partial<UserSchema>, private readonly store: UserStore) {
@@ -42,7 +44,8 @@ export class User implements firebase.User, UserSchema {
       phoneNumber: data.phoneNumber || null,
       photoURL: data.photoURL || null,
       providerData: data.providerData || [],
-      refreshToken: ""
+      refreshToken: "",
+      tenantId: data.tenantId || null
     });
   }
 
@@ -50,11 +53,15 @@ export class User implements firebase.User, UserSchema {
     throw new Error("Method not implemented.");
   }
 
-  getIdToken(forceRefresh?: boolean | undefined): Promise<any> {
+  getIdToken(forceRefresh?: boolean): Promise<any> {
     throw new Error("Method not implemented.");
   }
 
-  getToken(forceRefresh?: boolean | undefined): Promise<any> {
+  getIdTokenResult(forceRefresh?: boolean): Promise<any> {
+    throw new Error("Method not implemented.");
+  }
+
+  getToken(forceRefresh?: boolean): Promise<any> {
     throw new Error("Method not implemented.");
   }
 
@@ -111,7 +118,7 @@ export class User implements firebase.User, UserSchema {
   }
 
   sendEmailVerification(
-    actionCodeSettings?: firebase.auth.ActionCodeSettings | null | undefined
+    actionCodeSettings?: firebase.auth.ActionCodeSettings | null
   ): Promise<any> {
     throw new Error("Method not implemented.");
   }
