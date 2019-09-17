@@ -4,6 +4,7 @@ import { EventEmitter } from "../util";
 import { CollectionReference } from "./collection-reference";
 import { DataContainer } from "./data-container";
 import { DocumentReference } from "./document-reference";
+import { Query } from "./query";
 
 export class MockFirestore
   implements firebase.firestore.Firestore, DataContainer<CollectionReference> {
@@ -21,7 +22,19 @@ export class MockFirestore
     throw new Error("Method not implemented.");
   }
 
-  enablePersistence(): Promise<void> {
+  clearPersistence(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  enablePersistence(settings?: firebase.firestore.PersistenceSettings): Promise<void> {
+    return Promise.resolve();
+  }
+
+  enableNetwork(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  disableNetwork(): Promise<void> {
     return Promise.resolve();
   }
 
@@ -44,6 +57,10 @@ export class MockFirestore
     return this.child(path);
   }
 
+  collectionGroup(collectionId: string): Query {
+    throw new Error("Method not implemented.");
+  }
+
   doc(documentPath: string): DocumentReference {
     const path = documentPath.split("/").filter(Boolean);
     if (path.length % 2 === 1) {
@@ -64,4 +81,12 @@ export class MockFirestore
   }
 
   settings(settings: firebase.firestore.Settings): void {}
+
+  terminate(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  waitForPendingWrites(): Promise<void> {
+    return Promise.resolve();
+  }
 }

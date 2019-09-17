@@ -4,7 +4,6 @@ import { DocumentSnapshot } from "./document-snapshot";
 export class QuerySnapshot implements firebase.firestore.QuerySnapshot {
   query: firebase.firestore.Query;
   metadata: firebase.firestore.SnapshotMetadata;
-  docChanges: firebase.firestore.DocumentChange[];
 
   get size() {
     return this.docs.length;
@@ -16,7 +15,21 @@ export class QuerySnapshot implements firebase.firestore.QuerySnapshot {
 
   constructor(public readonly docs: DocumentSnapshot[]) {}
 
-  forEach(callback: (result: firebase.firestore.DocumentSnapshot) => void, thisArg?: any): void {
+  docChanges(
+    options?: firebase.firestore.SnapshotListenOptions
+  ): firebase.firestore.DocumentChange[] {
+    return [];
+  }
+
+  forEach(
+    callback: (result: firebase.firestore.QueryDocumentSnapshot) => void,
+    thisArg?: any
+  ): void {
     this.docs.forEach(callback, thisArg);
+  }
+
+  isEqual(other: firebase.firestore.QuerySnapshot): boolean {
+    // TODO: Actually make a comparison here
+    return other === this;
   }
 }

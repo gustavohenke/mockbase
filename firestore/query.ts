@@ -144,7 +144,7 @@ export class Query implements firebase.firestore.Query {
   }): () => void;
 
   onSnapshot(
-    options: firebase.firestore.QueryListenOptions,
+    options: firebase.firestore.SnapshotListenOptions,
     observer: {
       next?: ((snapshot: firebase.firestore.QuerySnapshot) => void) | undefined;
       error?: ((error: Error) => void) | undefined;
@@ -159,7 +159,7 @@ export class Query implements firebase.firestore.Query {
   ): () => void;
 
   onSnapshot(
-    options: firebase.firestore.QueryListenOptions,
+    options: firebase.firestore.SnapshotListenOptions,
     onNext: (snapshot: firebase.firestore.QuerySnapshot) => void,
     onError?: ((error: Error) => void) | undefined,
     onCompletion?: (() => void) | undefined

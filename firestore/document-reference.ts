@@ -80,7 +80,7 @@ export class DocumentReference
     throw new Error("Method not implemented.");
   }
 
-  get(): Promise<DocumentSnapshot> {
+  get(options?: firebase.firestore.GetOptions): Promise<DocumentSnapshot> {
     return Promise.resolve(new DocumentSnapshot(this, Object.assign({}, this.data)));
   }
 
@@ -91,7 +91,7 @@ export class DocumentReference
   }): () => void;
 
   onSnapshot(
-    options: firebase.firestore.DocumentListenOptions,
+    options: firebase.firestore.SnapshotListenOptions,
     observer: {
       next?: ((snapshot: firebase.firestore.DocumentSnapshot) => void) | undefined;
       error?: ((error: Error) => void) | undefined;
@@ -106,7 +106,7 @@ export class DocumentReference
   ): () => void;
 
   onSnapshot(
-    options: firebase.firestore.DocumentListenOptions,
+    options: firebase.firestore.SnapshotListenOptions,
     onNext: (snapshot: firebase.firestore.DocumentSnapshot) => void,
     onError?: ((error: Error) => void) | undefined,
     onCompletion?: (() => void) | undefined

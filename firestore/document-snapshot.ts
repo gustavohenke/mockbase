@@ -25,4 +25,16 @@ export class DocumentSnapshot implements firebase.firestore.DocumentSnapshot {
       .split(".")
       .reduce((obj, path) => (obj !== undefined ? obj[path] : obj), this._data);
   }
+
+  isEqual(other: firebase.firestore.DocumentSnapshot): boolean {
+    const otherData = other.data();
+    const thisData = this.data();
+    if (!otherData || !thisData) {
+      return otherData === thisData;
+    }
+
+    return Object.keys(otherData).every(key => {
+      return otherData[key] === thisData[key];
+    });
+  }
 }
