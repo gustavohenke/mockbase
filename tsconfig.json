@@ -10,6 +10,7 @@
     ],
     "sourceMap": true,
     "allowJs": false,
+    "declaration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "rootDir": "",
