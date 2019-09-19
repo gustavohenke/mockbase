@@ -1,6 +1,6 @@
 {
   "name": "mockbase",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Firebase v4+ mock.",
   "main": "app/index.js",
   "dependencies": {},
