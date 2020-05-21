@@ -1,7 +1,7 @@
 {
   "name": "mockbase",
   "version": "0.4.2",
-  "description": "Firebase v4+ mock.",
+  "description": "Firebase v7+ mock.",
   "main": "app/index.js",
   "dependencies": {},
   "devDependencies": {
@@ -22,7 +22,7 @@
     "test": "jest",
     "test:watch": "jest --watch --notify"
   },
-  "repository": "gustavohenke/firebase-stub",
+  "repository": "gustavohenke/mockbase",
   "license": "MIT",
   "jest": {
     "testEnvironment": "node",
