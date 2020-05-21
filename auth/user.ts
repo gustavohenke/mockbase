@@ -31,6 +31,7 @@ export class User implements firebase.User, UserSchema {
   refreshToken: string;
   tenantId: string | null;
   uid: string;
+  multiFactor: firebase.User.MultiFactorUser;
 
   constructor(data: Partial<UserSchema>, private readonly store: UserStore) {
     Object.assign(this, data, {
@@ -39,13 +40,13 @@ export class User implements firebase.User, UserSchema {
       emailVerified: data.emailVerified || false,
       metadata: {
         creationTime: (data.metadata && data.metadata.creationTime) || new Date().toISOString(),
-        lastSignInTime: data.metadata && data.metadata.lastSignInTime
+        lastSignInTime: data.metadata && data.metadata.lastSignInTime,
       },
       phoneNumber: data.phoneNumber || null,
       photoURL: data.photoURL || null,
       providerData: data.providerData || [],
       refreshToken: "",
-      tenantId: data.tenantId || null
+      tenantId: data.tenantId || null,
     });
   }
 
@@ -161,7 +162,7 @@ export class User implements firebase.User, UserSchema {
 
   updateProfile({
     displayName,
-    photoURL
+    photoURL,
   }: {
     displayName?: string | null;
     photoURL?: string | null;
@@ -171,5 +172,12 @@ export class User implements firebase.User, UserSchema {
     this.store.update(this.uid, { displayName, photoURL });
 
     return Promise.resolve();
+  }
+
+  verifyBeforeUpdateEmail(
+    newEmail: string,
+    actionCodeSettings?: firebase.auth.ActionCodeSettings | null | undefined
+  ): Promise<void> {
+    throw new Error("Method not implemented.");
   }
 }
