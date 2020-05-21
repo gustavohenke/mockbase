@@ -5,8 +5,9 @@ import {
   CollectionReference,
   DocumentSnapshot,
   QuerySnapshot,
-  MockFirestore
+  MockFirestore,
 } from "./";
+import { QueryDocumentSnapshot } from "./query-document-snapshot";
 
 interface QueryFilter {
   (doc: DocumentSnapshot): boolean;
@@ -21,7 +22,7 @@ export const QUERY_SNAPSHOT_NEXT_EVENT = "snapshot:next";
 export const QUERY_SNAPSHOT_ERROR_EVENT = "snapshot:error";
 export const QUERY_SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
 
-export class Query implements firebase.firestore.Query {
+export class Query<T = firebase.firestore.DocumentData> implements firebase.firestore.Query<T> {
   get firestore(): MockFirestore {
     return this.collection.firestore;
   }
@@ -31,7 +32,7 @@ export class Query implements firebase.firestore.Query {
   private ordering: Ordering;
   private docsLimit = Infinity;
 
-  constructor(private readonly collection: CollectionReference) {
+  constructor(private readonly collection: CollectionReference<T>) {
     this.collection.emitter.on(COLLECTION_CHANGE_EVENT, async () => {
       const snapshot = await this.get();
       this.emitter.emit(QUERY_SNAPSHOT_NEXT_EVENT, [snapshot]);
@@ -42,8 +43,8 @@ export class Query implements firebase.firestore.Query {
     fieldPath: string | firebase.firestore.FieldPath,
     opStr: firebase.firestore.WhereFilterOp,
     value: any
-  ): firebase.firestore.Query {
-    this.filters.set(`where:${fieldPath}:${opStr}:${value}`, doc => {
+  ): firebase.firestore.Query<T> {
+    this.filters.set(`where:${fieldPath}:${opStr}:${value}`, (doc) => {
       const fieldValue = doc.get(fieldPath.toString());
 
       switch (opStr) {
@@ -73,41 +74,45 @@ export class Query implements firebase.firestore.Query {
   orderBy(
     fieldPath: string | firebase.firestore.FieldPath,
     directionStr: "desc" | "asc" = "asc"
-  ): firebase.firestore.Query {
+  ): firebase.firestore.Query<T> {
     this.ordering = {
       fieldPath: fieldPath.toString(),
-      direction: directionStr
+      direction: directionStr,
     };
 
     return this;
   }
 
-  limit(limit: number): firebase.firestore.Query {
+  limit(limit: number): firebase.firestore.Query<T> {
     this.docsLimit = limit;
     return this;
   }
 
-  startAt(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
-  startAt(...fieldValues: any[]): firebase.firestore.Query;
-  startAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
+  limitToLast(limit: number): firebase.firestore.Query<T> {
     throw new Error("Method not implemented.");
   }
 
-  startAfter(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
-  startAfter(...fieldValues: any[]): firebase.firestore.Query;
-  startAfter(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
+  startAt(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
+  startAt(...fieldValues: any[]): firebase.firestore.Query<T>;
+  startAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
     throw new Error("Method not implemented.");
   }
 
-  endBefore(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
-  endBefore(...fieldValues: any[]): firebase.firestore.Query;
-  endBefore(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
+  startAfter(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
+  startAfter(...fieldValues: any[]): firebase.firestore.Query<T>;
+  startAfter(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
     throw new Error("Method not implemented.");
   }
 
-  endAt(snapshot: firebase.firestore.DocumentSnapshot): firebase.firestore.Query;
-  endAt(...fieldValues: any[]): firebase.firestore.Query;
-  endAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query {
+  endBefore(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
+  endBefore(...fieldValues: any[]): firebase.firestore.Query<T>;
+  endBefore(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
+    throw new Error("Method not implemented.");
+  }
+
+  endAt(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
+  endAt(...fieldValues: any[]): firebase.firestore.Query<T>;
+  endAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
     throw new Error("Method not implemented.");
   }
 
@@ -126,11 +131,15 @@ export class Query implements firebase.firestore.Query {
     return result * (this.ordering.direction === "asc" ? 1 : -1);
   }
 
-  async get(): Promise<firebase.firestore.QuerySnapshot> {
+  async get(): Promise<firebase.firestore.QuerySnapshot<T>> {
     const allDocs = Array.from(this.collection.children.values());
-    const allSnapshots = await Promise.all(allDocs.map(doc => doc.get()));
+    const allSnapshots = await Promise.all(
+      allDocs
+        .filter((doc) => doc.data !== undefined)
+        .map((doc) => new QueryDocumentSnapshot(doc, doc.data!, this.collection.converter))
+    );
     const actualSnapshots = allSnapshots
-      .filter(snapshot => Array.from(this.filters.values()).every(filter => filter(snapshot)))
+      .filter((snapshot) => Array.from(this.filters.values()).every((filter) => filter(snapshot)))
       .sort(this.compareFunction.bind(this))
       .slice(0, this.docsLimit);
 
@@ -138,7 +147,7 @@ export class Query implements firebase.firestore.Query {
   }
 
   onSnapshot(observer: {
-    next?: ((snapshot: firebase.firestore.QuerySnapshot) => void) | undefined;
+    next?: ((snapshot: firebase.firestore.QuerySnapshot<T>) => void) | undefined;
     error?: ((error: Error) => void) | undefined;
     complete?: (() => void) | undefined;
   }): () => void;
@@ -146,21 +155,21 @@ export class Query implements firebase.firestore.Query {
   onSnapshot(
     options: firebase.firestore.SnapshotListenOptions,
     observer: {
-      next?: ((snapshot: firebase.firestore.QuerySnapshot) => void) | undefined;
+      next?: ((snapshot: firebase.firestore.QuerySnapshot<T>) => void) | undefined;
       error?: ((error: Error) => void) | undefined;
       complete?: (() => void) | undefined;
     }
   ): () => void;
 
   onSnapshot(
-    onNext: (snapshot: firebase.firestore.QuerySnapshot) => void,
+    onNext: (snapshot: firebase.firestore.QuerySnapshot<T>) => void,
     onError?: ((error: Error) => void) | undefined,
     onCompletion?: (() => void) | undefined
   ): () => void;
 
   onSnapshot(
     options: firebase.firestore.SnapshotListenOptions,
-    onNext: (snapshot: firebase.firestore.QuerySnapshot) => void,
+    onNext: (snapshot: firebase.firestore.QuerySnapshot<T>) => void,
     onError?: ((error: Error) => void) | undefined,
     onCompletion?: (() => void) | undefined
   ): () => void;
@@ -185,11 +194,15 @@ export class Query implements firebase.firestore.Query {
     this.emitter.on(QUERY_SNAPSHOT_NEXT_EVENT, actualListeners.next);
     this.emitter.on(QUERY_SNAPSHOT_ERROR_EVENT, actualListeners.error);
 
-    this.get().then(snapshot => actualListeners.next(snapshot));
+    this.get().then((snapshot) => actualListeners.next(snapshot));
 
     return () => {
       this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, actualListeners.next);
       this.emitter.off(QUERY_SNAPSHOT_ERROR_EVENT, actualListeners.error);
     };
+  }
+
+  withConverter<U>(converter: firebase.firestore.FirestoreDataConverter<U>): Query<U> {
+    throw new Error("Method not implemented.");
   }
 }

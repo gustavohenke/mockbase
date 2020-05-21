@@ -4,19 +4,20 @@ import { COLLECTION_CHANGE_EVENT, CollectionReference } from "./collection-refer
 import { DataContainer } from "./data-container";
 import { DocumentSnapshot } from "./document-snapshot";
 import { MockFirestore } from "./firestore";
+import { DataConverter } from "./data-converter";
 
 export const SNAPSHOT_NEXT_EVENT = "snapshot:next";
 export const SNAPSHOT_ERROR_EVENT = "snapshot:error";
 export const SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
 
-export class DocumentReference
-  implements firebase.firestore.DocumentReference, DataContainer<CollectionReference> {
-  public readonly children: Map<string, CollectionReference>;
+export class DocumentReference<T = firebase.firestore.DocumentData>
+  implements firebase.firestore.DocumentReference<T>, DataContainer<CollectionReference> {
+  public readonly children: Map<string, CollectionReference<any>>;
 
   private readonly emitter = new EventEmitter();
 
-  public get data(): {} {
-    return this.firestore.data.get(this.path) || {};
+  public get data(): firebase.firestore.DocumentData | undefined {
+    return this.firestore.data.get(this.path);
   }
 
   get path(): string {
@@ -26,7 +27,8 @@ export class DocumentReference
   constructor(
     public readonly firestore: MockFirestore,
     public readonly id: string,
-    public readonly parent: CollectionReference
+    public readonly parent: CollectionReference<any>,
+    private readonly converter: firebase.firestore.FirestoreDataConverter<T>
   ) {
     let ref = parent.children.get(id);
 
@@ -40,26 +42,37 @@ export class DocumentReference
   }
 
   collection(collectionPath: string): CollectionReference {
-    return new CollectionReference(this.firestore, collectionPath, this);
+    return new CollectionReference(this.firestore, collectionPath, this, new DataConverter());
   }
 
-  isEqual(other: firebase.firestore.DocumentReference): boolean {
+  isEqual(other: firebase.firestore.DocumentReference<any>): boolean {
     throw new Error("Method not implemented.");
   }
 
-  set(
-    data: firebase.firestore.DocumentData,
-    options: firebase.firestore.SetOptions | undefined = {}
-  ): Promise<void> {
-    this.firestore.data.set(this.path, Object.assign(options.merge ? this.data : {}, data));
-    return this.get().then(snapshot => {
+  set(data: T, options: firebase.firestore.SetOptions | undefined = {}): Promise<void> {
+    const parsedData = this.converter.toFirestore(data);
+    this.firestore.data.set(this.path, Object.assign(options.merge ? this.data : {}, parsedData));
+    return this.get().then((snapshot) => {
       this.parent.emitter.emit(COLLECTION_CHANGE_EVENT);
       this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]);
     });
   }
 
-  update(data: any): Promise<void> {
-    Object.keys(data).forEach(key => {
+  update(data: firebase.firestore.UpdateData): Promise<void>;
+  update(
+    field: string | firebase.firestore.FieldPath,
+    value: any,
+    ...moreFieldsAndValues: any[]
+  ): Promise<void>;
+
+  update(
+    data: firebase.firestore.UpdateData | string | firebase.firestore.FieldPath
+  ): Promise<void> {
+    if (typeof data === "string" || data instanceof firebase.firestore.FieldPath) {
+      throw new Error("Document updating by field is not supported");
+    }
+
+    Object.keys(data).forEach((key) => {
       key.split(".").reduce((obj, part, index, path) => {
         if (path.length === index + 1) {
           obj[part] = data[key];
@@ -68,24 +81,25 @@ export class DocumentReference
         }
 
         return obj[part];
-      }, this.data);
+      }, this.data || {});
     });
-    return this.get().then(snapshot => {
+    return this.get().then((snapshot) => {
       this.parent.emitter.emit(COLLECTION_CHANGE_EVENT);
       this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]);
     });
   }
-
   delete(): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
-  get(options?: firebase.firestore.GetOptions): Promise<DocumentSnapshot> {
-    return Promise.resolve(new DocumentSnapshot(this, Object.assign({}, this.data)));
+  get(options?: firebase.firestore.GetOptions): Promise<DocumentSnapshot<T>> {
+    return Promise.resolve(
+      new DocumentSnapshot(this, Object.assign({}, this.data), this.converter)
+    );
   }
 
   onSnapshot(observer: {
-    next?: ((snapshot: firebase.firestore.DocumentSnapshot) => void) | undefined;
+    next?: ((snapshot: firebase.firestore.DocumentSnapshot<T>) => void) | undefined;
     error?: ((error: firebase.firestore.FirestoreError) => void) | undefined;
     complete?: (() => void) | undefined;
   }): () => void;
@@ -93,21 +107,21 @@ export class DocumentReference
   onSnapshot(
     options: firebase.firestore.SnapshotListenOptions,
     observer: {
-      next?: ((snapshot: firebase.firestore.DocumentSnapshot) => void) | undefined;
+      next?: ((snapshot: firebase.firestore.DocumentSnapshot<T>) => void) | undefined;
       error?: ((error: Error) => void) | undefined;
       complete?: (() => void) | undefined;
     }
   ): () => void;
 
   onSnapshot(
-    onNext: (snapshot: firebase.firestore.DocumentSnapshot) => void,
+    onNext: (snapshot: firebase.firestore.DocumentSnapshot<T>) => void,
     onError?: ((error: Error) => void) | undefined,
     onCompletion?: (() => void) | undefined
   ): () => void;
 
   onSnapshot(
     options: firebase.firestore.SnapshotListenOptions,
-    onNext: (snapshot: firebase.firestore.DocumentSnapshot) => void,
+    onNext: (snapshot: firebase.firestore.DocumentSnapshot<T>) => void,
     onError?: ((error: Error) => void) | undefined,
     onCompletion?: (() => void) | undefined
   ): () => void;
@@ -132,11 +146,15 @@ export class DocumentReference
     this.emitter.on(SNAPSHOT_NEXT_EVENT, actualListeners.next);
     this.emitter.on(SNAPSHOT_ERROR_EVENT, actualListeners.error);
 
-    this.get().then(snapshot => this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]));
+    this.get().then((snapshot) => this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]));
 
     return () => {
       this.emitter.off(SNAPSHOT_NEXT_EVENT, actualListeners.next);
       this.emitter.off(SNAPSHOT_ERROR_EVENT, actualListeners.error);
     };
+  }
+
+  withConverter<U>(converter: firebase.firestore.FirestoreDataConverter<U>): DocumentReference<U> {
+    return new DocumentReference(this.firestore, this.id, this.parent, converter);
   }
 }
