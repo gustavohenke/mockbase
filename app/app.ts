@@ -8,6 +8,10 @@ export class MockApp implements firebase.app.App {
 
   constructor(public readonly name: string, public readonly options: {} = {}) {}
 
+  analytics(): firebase.analytics.Analytics {
+    throw new Error("Not implemented");
+  }
+
   auth() {
     this.authInstance = this.authInstance || new MockAuth(this);
     return this.authInstance;
@@ -39,6 +43,10 @@ export class MockApp implements firebase.app.App {
   }
 
   performance(): firebase.performance.Performance {
+    throw new Error("Not implemented");
+  }
+
+  remoteConfig(): firebase.remoteConfig.RemoteConfig {
     throw new Error("Not implemented");
   }
 
