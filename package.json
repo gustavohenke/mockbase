@@ -5,15 +5,15 @@
   "main": "app/index.js",
   "dependencies": {},
   "devDependencies": {
-    "@types/jest": "^24.0.18",
+    "@types/jest": "^25.2.3",
     "@types/node": "^10.14.18",
-    "coveralls": "^3.0.6",
-    "firebase": "^6.6.1",
-    "jest": "^24.9.0",
+    "coveralls": "^3.1.0",
+    "firebase": "^7.14.4",
+    "jest": "^26.0.1",
     "jest-create-mock-instance": "^1.1.0",
-    "prettier": "^1.18.2",
-    "ts-jest": "^24.1.0",
-    "typescript": "^3.6.3"
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.0.0",
+    "typescript": "^3.9.3"
   },
   "scripts": {
     "build": "tsc",
