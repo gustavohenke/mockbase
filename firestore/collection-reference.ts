@@ -20,10 +20,12 @@ export class MockCollectionReference<T = firebase.firestore.DocumentData> extend
   }
 
   doc(documentPath?: string | undefined): firebase.firestore.DocumentReference<T> {
-    throw new Error("Method not implemented.");
+    documentPath = documentPath || this.firestore.nextId();
+    return this.firestore.doc(this.path + "/" + documentPath).withConverter(this.converter);
   }
   add(data: T): Promise<firebase.firestore.DocumentReference<T>> {
-    throw new Error("Method not implemented.");
+    const doc = this.doc();
+    return doc.set(data).then(() => doc);
   }
   isEqual(other: firebase.firestore.CollectionReference<T>): boolean {
     throw new Error("Method not implemented.");

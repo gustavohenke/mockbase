@@ -17,7 +17,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
   collection(
     collectionPath: string
   ): firebase.firestore.CollectionReference<firebase.firestore.DocumentData> {
-    throw new Error("Method not implemented.");
+    return this.firestore.collection(this.path + "/" + collectionPath);
   }
   isEqual(other: firebase.firestore.DocumentReference<T>): boolean {
     throw new Error("Method not implemented.");
