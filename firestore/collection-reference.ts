@@ -33,7 +33,7 @@ export class MockCollectionReference<T = firebase.firestore.DocumentData> extend
 
   withConverter<U>(
     converter: firebase.firestore.FirestoreDataConverter<U>
-  ): firebase.firestore.CollectionReference<U> {
+  ): MockCollectionReference<U> {
     return new MockCollectionReference(
       this.firestore,
       this.id,

@@ -18,7 +18,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   constructor(
     public readonly firestore: MockFirestore,
     public readonly path: string,
-    public readonly converter: firebase.firestore.FirestoreDataConverter<T>
+    public converter: firebase.firestore.FirestoreDataConverter<T>
   ) {}
 
   private clone(): MockQuery<T> {
@@ -163,9 +163,9 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     throw new Error("Method not implemented.");
   }
 
-  withConverter<U>(
-    converter: firebase.firestore.FirestoreDataConverter<U>
-  ): firebase.firestore.Query<U> {
-    throw new Error("Method not implemented.");
+  withConverter<U>(converter: firebase.firestore.FirestoreDataConverter<U>): MockQuery<U> {
+    const query = (this.clone() as unknown) as MockQuery<U>;
+    query.converter = converter;
+    return query;
   }
 }
