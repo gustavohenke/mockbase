@@ -1,5 +1,6 @@
 import * as firebase from "firebase";
 import { MockFirestore } from "./firestore";
+import { DEFAULT_DATA_CONVERTER } from "./data-converter";
 
 export class MockCollectionReference<T = firebase.firestore.DocumentData>
   implements firebase.firestore.CollectionReference<T> {
@@ -11,7 +12,8 @@ export class MockCollectionReference<T = firebase.firestore.DocumentData>
   constructor(
     public readonly firestore: MockFirestore,
     public readonly id: string,
-    public readonly parent: firebase.firestore.DocumentReference | null
+    public readonly parent: firebase.firestore.DocumentReference | null,
+    public readonly converter: firebase.firestore.FirestoreDataConverter<T>
   ) {}
 
   doc(documentPath?: string | undefined): firebase.firestore.DocumentReference<T> {
@@ -104,6 +106,11 @@ export class MockCollectionReference<T = firebase.firestore.DocumentData>
   withConverter<U>(
     converter: firebase.firestore.FirestoreDataConverter<U>
   ): firebase.firestore.CollectionReference<U> {
-    throw new Error("Method not implemented.");
+    return new MockCollectionReference(
+      this.firestore,
+      this.id,
+      this.parent && this.parent.withConverter(DEFAULT_DATA_CONVERTER),
+      converter
+    );
   }
 }
