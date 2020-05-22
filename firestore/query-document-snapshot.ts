@@ -1,18 +1,19 @@
 import * as firebase from "firebase";
-import { DocumentReference } from "./document-reference";
-import { DocumentSnapshot } from "./document-snapshot";
+import { MockDocumentReference } from "./document-reference";
+import { MockDocumentSnapshot } from "./document-snapshot";
 
-export class QueryDocumentSnapshot<T = firebase.firestore.DocumentData> extends DocumentSnapshot<T>
+export class MockQueryDocumentSnapshot<T = firebase.firestore.DocumentData>
+  extends MockDocumentSnapshot<T>
   implements firebase.firestore.QueryDocumentSnapshot<T> {
-  constructor(
-    ref: DocumentReference,
-    data: firebase.firestore.DocumentData,
-    converter: firebase.firestore.FirestoreDataConverter<T>
-  ) {
-    super(ref, data, converter);
+  get id() {
+    return this.ref.id;
   }
 
-  data(options?: firebase.firestore.SnapshotOptions): T {
-    return super.data(options)!;
+  constructor(ref: MockDocumentReference<T>, _data: firebase.firestore.DocumentData) {
+    super(ref, _data);
+  }
+
+  data(options?: firebase.firestore.SnapshotOptions | undefined): T {
+    return this.ref.converter.fromFirestore(this, options || {});
   }
 }
