@@ -74,9 +74,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     throw new Error("Method not implemented.");
   }
 
-  get(
-    options?: firebase.firestore.GetOptions | undefined
-  ): Promise<firebase.firestore.DocumentSnapshot<T>> {
+  get(options?: firebase.firestore.GetOptions): Promise<firebase.firestore.DocumentSnapshot<T>> {
     return Promise.resolve(
       new MockDocumentSnapshot(this, this.currentData ? Object.assign(this.currentData) : undefined)
     );

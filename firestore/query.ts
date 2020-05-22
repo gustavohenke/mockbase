@@ -55,6 +55,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     };
     return query;
   }
+
   orderBy(
     fieldPath: string | firebase.firestore.FieldPath,
     direction: "desc" | "asc" = "asc"
@@ -67,11 +68,13 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     query.ordering = { fieldPath, direction };
     return query;
   }
+
   limit(limit: number): firebase.firestore.Query<T> {
     const query = this.clone();
     query.docsLimit = limit;
     return query;
   }
+
   limitToLast(limit: number): firebase.firestore.Query<T> {
     throw new Error("Method not implemented.");
   }
@@ -118,7 +121,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     return result * (this.ordering.direction === "asc" ? 1 : -1);
   };
 
-  get(options?: firebase.firestore.GetOptions | undefined): Promise<MockQuerySnapshot<T>> {
+  get(options?: firebase.firestore.GetOptions): Promise<MockQuerySnapshot<T>> {
     const allDocs = Array.from(this.firestore.collectionDocuments.values());
     const allSnapshots = allDocs.map(
       (doc) =>
