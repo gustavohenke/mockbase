@@ -6,6 +6,7 @@ import { MockCollectionReference } from "./collection-reference";
 export class MockFirestore implements firebase.firestore.Firestore {
   private id = 0;
   public readonly documentData = new Map<string, firebase.firestore.DocumentData>();
+  public readonly collectionDocuments = new Map<string, string>();
 
   constructor(public readonly app: firebase.app.App) {}
 
@@ -19,9 +20,7 @@ export class MockFirestore implements firebase.firestore.Firestore {
   enablePersistence(settings?: firebase.firestore.PersistenceSettings | undefined): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  collection(
-    collectionPath: string
-  ): firebase.firestore.CollectionReference<firebase.firestore.DocumentData> {
+  collection(collectionPath: string): MockCollectionReference<firebase.firestore.DocumentData> {
     const parts = collectionPath.split("/");
     if (parts.length % 2 === 0) {
       throw new Error("Not a collection path");
@@ -37,7 +36,7 @@ export class MockFirestore implements firebase.firestore.Firestore {
   collectionGroup(collectionId: string): firebase.firestore.Query<firebase.firestore.DocumentData> {
     throw new Error("Method not implemented.");
   }
-  doc(documentPath: string): firebase.firestore.DocumentReference<firebase.firestore.DocumentData> {
+  doc(documentPath: string): MockDocumentReference<firebase.firestore.DocumentData> {
     const parts = documentPath.split("/");
     if (parts.length % 2 !== 0) {
       throw new Error("Not a document path");

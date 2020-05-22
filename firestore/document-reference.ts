@@ -38,6 +38,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
       this.path,
       Object.assign(options.merge ? this.currentData : {}, parsedData)
     );
+    this.firestore.collectionDocuments.set(this.parent.path, this.path);
     return Promise.resolve();
   }
 
@@ -50,6 +51,9 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
   update(data: any, ...rest: any[]): Promise<void> {
     if (typeof data === "string" || data instanceof firebase.firestore.FieldPath) {
       throw new Error("Document updating by field is not supported");
+    }
+    if (this.currentData === undefined) {
+      return Promise.reject();
     }
 
     Object.keys(data).forEach((key) => {
@@ -108,7 +112,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
 
   withConverter<U>(
     converter: firebase.firestore.FirestoreDataConverter<U>
-  ): firebase.firestore.DocumentReference<U> {
+  ): MockDocumentReference<U> {
     return new MockDocumentReference(
       this.firestore,
       this.id,
