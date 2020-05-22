@@ -16,11 +16,11 @@ export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
 
   constructor(
     public readonly ref: MockDocumentReference<T>,
-    public readonly _data: firebase.firestore.DocumentData
+    public readonly _data: firebase.firestore.DocumentData | undefined
   ) {}
 
   data(options?: firebase.firestore.SnapshotOptions | undefined): T | undefined {
-    if (!this._data === undefined) {
+    if (this._data === undefined) {
       return undefined;
     }
     const querySnapshot = new MockQueryDocumentSnapshot(this.ref, this._data);

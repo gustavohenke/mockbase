@@ -1,10 +1,15 @@
 import * as firebase from "firebase";
 import { MockFirestore } from "./firestore";
+import { MockDocumentSnapshot } from "./document-snapshot";
 
 export class MockDocumentReference<T = firebase.firestore.DocumentData>
   implements firebase.firestore.DocumentReference<T> {
   get path(): string {
     return this.parent.path + "/" + this.id;
+  }
+
+  private get currentData() {
+    return this.firestore.documentData.get(this.path);
   }
 
   constructor(
@@ -22,8 +27,18 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
   isEqual(other: firebase.firestore.DocumentReference<T>): boolean {
     throw new Error("Method not implemented.");
   }
-  set(data: T, options?: firebase.firestore.SetOptions | undefined): Promise<void> {
-    throw new Error("Method not implemented.");
+  set(data: T, options: firebase.firestore.SetOptions | undefined = {}): Promise<void> {
+    if (options.mergeFields && options.mergeFields.length) {
+      throw new Error("Option mergeFields is not supported");
+    }
+
+    const parsedData = this.converter.toFirestore(data);
+
+    this.firestore.documentData.set(
+      this.path,
+      Object.assign(options.merge ? this.currentData : {}, parsedData)
+    );
+    return Promise.resolve();
   }
 
   update(data: firebase.firestore.UpdateData): Promise<void>;
@@ -33,7 +48,22 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     ...moreFieldsAndValues: any[]
   ): Promise<void>;
   update(data: any, ...rest: any[]): Promise<void> {
-    throw new Error("Method not implemented.");
+    if (typeof data === "string" || data instanceof firebase.firestore.FieldPath) {
+      throw new Error("Document updating by field is not supported");
+    }
+
+    Object.keys(data).forEach((key) => {
+      key.split(".").reduce((obj, part, index, path) => {
+        if (path.length === index + 1) {
+          obj[part] = data[key];
+        } else {
+          obj[part] = typeof obj[part] === "object" ? obj[part] : {};
+        }
+
+        return obj[part];
+      }, this.currentData || {});
+    });
+    return Promise.resolve();
   }
 
   delete(): Promise<void> {
@@ -43,7 +73,9 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
   get(
     options?: firebase.firestore.GetOptions | undefined
   ): Promise<firebase.firestore.DocumentSnapshot<T>> {
-    throw new Error("Method not implemented.");
+    return Promise.resolve(
+      new MockDocumentSnapshot(this, this.currentData ? Object.assign(this.currentData) : undefined)
+    );
   }
 
   onSnapshot(observer: {

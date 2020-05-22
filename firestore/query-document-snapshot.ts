@@ -9,7 +9,10 @@ export class MockQueryDocumentSnapshot<T = firebase.firestore.DocumentData>
     return this.ref.id;
   }
 
-  constructor(ref: MockDocumentReference<T>, _data: firebase.firestore.DocumentData) {
+  constructor(
+    ref: MockDocumentReference<T>,
+    public readonly _data: firebase.firestore.DocumentData
+  ) {
     super(ref, _data);
   }
 
