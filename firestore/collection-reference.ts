@@ -16,7 +16,7 @@ export class MockCollectionReference<T = firebase.firestore.DocumentData> extend
     public readonly parent: firebase.firestore.DocumentReference | null,
     public readonly converter: firebase.firestore.FirestoreDataConverter<T>
   ) {
-    super(firestore);
+    super(firestore, (parent ? parent.path : "") + "/" + id, converter);
   }
 
   doc(documentPath?: string | undefined): firebase.firestore.DocumentReference<T> {

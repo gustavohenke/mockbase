@@ -1,24 +1,76 @@
 import * as firebase from "firebase";
 import { MockFirestore } from "./firestore";
+import { MockDocumentSnapshot } from "./document-snapshot";
+import { MockQueryDocumentSnapshot } from "./query-document-snapshot";
+import { MockQuerySnapshot } from "./query-snapshot";
+
+type QueryFilter = (doc: MockDocumentSnapshot) => boolean;
+type Ordering = {
+  fieldPath: string;
+  direction: "asc" | "desc";
+};
 
 export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.firestore.Query<T> {
-  constructor(public readonly firestore: MockFirestore) {}
+  private docsLimit = Infinity;
+  private filters: Record<string, QueryFilter> = {};
+  private ordering?: Ordering;
+
+  constructor(
+    public readonly firestore: MockFirestore,
+    public readonly path: string,
+    public readonly converter: firebase.firestore.FirestoreDataConverter<T>
+  ) {}
+
+  private clone(): MockQuery<T> {
+    const query = new MockQuery(this.firestore, this.path, this.converter);
+    Object.assign(query, this);
+    query.filters = Object.assign({}, this.filters);
+    return query;
+  }
 
   where(
     fieldPath: string | firebase.firestore.FieldPath,
     opStr: firebase.firestore.WhereFilterOp,
     value: any
   ): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+    const key = `where:${fieldPath}:${opStr}:${value}`;
+    const query = this.clone();
+    query.filters[key] = (doc) => {
+      const fieldValue = doc.get(fieldPath.toString());
+
+      switch (opStr) {
+        case "==":
+          return fieldValue == value;
+        case ">":
+          return fieldValue > value;
+        case "<":
+          return fieldValue < value;
+        case ">=":
+          return fieldValue >= value;
+        case "<=":
+          return fieldValue <= value;
+        default:
+          return true;
+      }
+    };
+    return query;
   }
   orderBy(
     fieldPath: string | firebase.firestore.FieldPath,
-    directionStr?: "desc" | "asc" | undefined
+    direction: "desc" | "asc" = "asc"
   ): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+    if (fieldPath instanceof firebase.firestore.FieldPath) {
+      throw new Error("Ordering a query by FieldPath is not supported");
+    }
+
+    const query = this.clone();
+    query.ordering = { fieldPath, direction };
+    return query;
   }
   limit(limit: number): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+    const query = this.clone();
+    query.docsLimit = limit;
+    return query;
   }
   limitToLast(limit: number): firebase.firestore.Query<T> {
     throw new Error("Method not implemented.");
@@ -52,10 +104,35 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     throw new Error("Method not implemented.");
   }
 
-  get(
-    options?: firebase.firestore.GetOptions | undefined
-  ): Promise<firebase.firestore.QuerySnapshot<T>> {
-    throw new Error("Method not implemented.");
+  private readonly compareFunction = (
+    a: MockQueryDocumentSnapshot<T>,
+    b: MockQueryDocumentSnapshot<T>
+  ) => {
+    if (!this.ordering) {
+      return -1;
+    }
+
+    const aValue = a.get(this.ordering.fieldPath);
+    const bValue = b.get(this.ordering.fieldPath);
+    const result = aValue <= bValue ? -1 : 1;
+    return result * (this.ordering.direction === "asc" ? 1 : -1);
+  };
+
+  get(options?: firebase.firestore.GetOptions | undefined): Promise<MockQuerySnapshot<T>> {
+    const allDocs = Array.from(this.firestore.collectionDocuments.values());
+    const allSnapshots = allDocs.map(
+      (doc) =>
+        new MockQueryDocumentSnapshot(
+          this.firestore.doc(doc).withConverter(this.converter),
+          this.firestore.documentData.get(doc)!
+        )
+    );
+    const actualSnapshots = allSnapshots
+      .filter((snapshot) => Object.values(this.filters).every((filter) => filter(snapshot)))
+      .sort(this.compareFunction)
+      .slice(0, this.docsLimit);
+
+    return Promise.resolve(new MockQuerySnapshot(this, actualSnapshots));
   }
 
   onSnapshot(observer: {
