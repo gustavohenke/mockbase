@@ -1,9 +1,17 @@
 import * as firebase from "firebase";
+import { MockDocumentReference } from "./document-reference";
+import { DEFAULT_DATA_CONVERTER } from "./data-converter";
+import { MockCollectionReference } from "./collection-reference";
 
 export class MockFirestore implements firebase.firestore.Firestore {
+  private id = 0;
   public readonly documentData = new Map<string, firebase.firestore.DocumentData>();
 
   constructor(public readonly app: firebase.app.App) {}
+
+  nextId() {
+    return "__id" + this.id++;
+  }
 
   settings(settings: firebase.firestore.Settings): void {
     throw new Error("Method not implemented.");
@@ -14,13 +22,32 @@ export class MockFirestore implements firebase.firestore.Firestore {
   collection(
     collectionPath: string
   ): firebase.firestore.CollectionReference<firebase.firestore.DocumentData> {
-    throw new Error("Method not implemented.");
-  }
-  doc(documentPath: string): firebase.firestore.DocumentReference<firebase.firestore.DocumentData> {
-    throw new Error("Method not implemented.");
+    const parts = collectionPath.split("/");
+    if (parts.length % 2 === 0) {
+      throw new Error("Not a collection path");
+    }
+
+    return new MockCollectionReference(
+      this,
+      parts.pop()!,
+      parts.length ? this.doc(parts.join("/")) : null,
+      DEFAULT_DATA_CONVERTER
+    );
   }
   collectionGroup(collectionId: string): firebase.firestore.Query<firebase.firestore.DocumentData> {
     throw new Error("Method not implemented.");
+  }
+  doc(documentPath: string): firebase.firestore.DocumentReference<firebase.firestore.DocumentData> {
+    const parts = documentPath.split("/");
+    if (parts.length % 2 !== 0) {
+      throw new Error("Not a document path");
+    }
+    return new MockDocumentReference(
+      this,
+      parts.pop()!,
+      this.collection(parts.join("/")),
+      DEFAULT_DATA_CONVERTER
+    );
   }
   runTransaction<T>(
     updateFunction: (transaction: firebase.firestore.Transaction) => Promise<T>
