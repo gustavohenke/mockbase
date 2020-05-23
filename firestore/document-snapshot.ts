@@ -25,12 +25,17 @@ export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
     const querySnapshot = new MockQueryDocumentSnapshot(this.ref, this._data);
     return querySnapshot.data(options);
   }
+
   get(
     fieldPath: string | firebase.firestore.FieldPath,
     options?: firebase.firestore.SnapshotOptions | undefined
   ) {
-    throw new Error("Method not implemented.");
+    fieldPath
+      .toString()
+      .split(".")
+      .reduce((obj, path) => (obj !== undefined ? obj[path] : obj), this._data);
   }
+
   isEqual(other: firebase.firestore.DocumentSnapshot<T>): boolean {
     throw new Error("Method not implemented.");
   }
