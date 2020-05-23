@@ -1,5 +1,5 @@
 import * as firebase from "firebase";
-import { Observer } from "../util";
+import { EventEmitter, Observer } from "../util";
 import { MockQueryDocumentSnapshot } from "./document-snapshot";
 import { MockFirestore } from "./firestore";
 import { MockQuerySnapshot } from "./query-snapshot";
@@ -20,7 +20,9 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   private ordering?: Ordering;
 
   protected get emitter() {
-    return this.firestore.collectionEvents.get(this.path)!;
+    const emitter = this.firestore.collectionEvents.get(this.path) || new EventEmitter();
+    this.firestore.collectionEvents.set(this.path, emitter);
+    return emitter;
   }
 
   constructor(
