@@ -29,7 +29,7 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
     callback: (result: firebase.firestore.QueryDocumentSnapshot<T>) => void,
     thisArg?: any
   ): void {
-    throw new Error("Method not implemented.");
+    this.docs.forEach(callback, thisArg);
   }
 
   isEqual(other: firebase.firestore.QuerySnapshot<T>): boolean {
