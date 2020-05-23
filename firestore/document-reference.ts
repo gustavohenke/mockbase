@@ -96,18 +96,10 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     );
   }
 
-  onSnapshot(observer: {
-    next?: ((snapshot: firebase.firestore.DocumentSnapshot<T>) => void) | undefined;
-    error?: ((error: firebase.firestore.FirestoreError) => void) | undefined;
-    complete?: (() => void) | undefined;
-  }): () => void;
+  onSnapshot(observer: Observer<firebase.firestore.DocumentSnapshot<T>>): () => void;
   onSnapshot(
     options: firebase.firestore.SnapshotListenOptions,
-    observer: {
-      next?: ((snapshot: firebase.firestore.DocumentSnapshot<T>) => void) | undefined;
-      error?: ((error: Error) => void) | undefined;
-      complete?: (() => void) | undefined;
-    }
+    observer: Observer<firebase.firestore.DocumentSnapshot<T>>
   ): () => void;
   onSnapshot(
     onNext: (snapshot: firebase.firestore.DocumentSnapshot<T>) => void,

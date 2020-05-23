@@ -3,6 +3,7 @@ import { MockFirestore } from "./firestore";
 import { MockDocumentSnapshot } from "./document-snapshot";
 import { MockQueryDocumentSnapshot } from "./query-document-snapshot";
 import { MockQuerySnapshot } from "./query-snapshot";
+import { Observer } from "../util";
 
 type QueryFilter = (doc: MockDocumentSnapshot) => boolean;
 type Ordering = {
@@ -10,10 +11,18 @@ type Ordering = {
   direction: "asc" | "desc";
 };
 
+export const QUERY_SNAPSHOT_NEXT_EVENT = "snapshot:next";
+export const QUERY_SNAPSHOT_ERROR_EVENT = "snapshot:error";
+export const QUERY_SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
+
 export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.firestore.Query<T> {
   private docsLimit = Infinity;
   private filters: Record<string, QueryFilter> = {};
   private ordering?: Ordering;
+
+  protected get emitter() {
+    return this.firestore.collectionEvents.get(this.path)!;
+  }
 
   constructor(
     public readonly firestore: MockFirestore,
@@ -138,18 +147,10 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     return Promise.resolve(new MockQuerySnapshot(this, actualSnapshots));
   }
 
-  onSnapshot(observer: {
-    next?: ((snapshot: firebase.firestore.QuerySnapshot<T>) => void) | undefined;
-    error?: ((error: Error) => void) | undefined;
-    complete?: (() => void) | undefined;
-  }): () => void;
+  onSnapshot(observer: Observer<firebase.firestore.QuerySnapshot<T>>): () => void;
   onSnapshot(
     options: firebase.firestore.SnapshotListenOptions,
-    observer: {
-      next?: ((snapshot: firebase.firestore.QuerySnapshot<T>) => void) | undefined;
-      error?: ((error: Error) => void) | undefined;
-      complete?: (() => void) | undefined;
-    }
+    observer: Observer<firebase.firestore.QuerySnapshot<T>>
   ): () => void;
   onSnapshot(
     onNext: (snapshot: firebase.firestore.QuerySnapshot<T>) => void,
@@ -163,7 +164,40 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     onCompletion?: (() => void) | undefined
   ): () => void;
   onSnapshot(options: any, onNext?: any, onError?: any, onCompletion?: any): () => void {
-    throw new Error("Method not implemented.");
+    let actualListeners: Observer<firebase.firestore.QuerySnapshot<T>>;
+
+    if (typeof options === "object") {
+      if (typeof onNext === "object") {
+        actualListeners = onNext;
+      } else if (typeof onNext === "function") {
+        actualListeners = {
+          next: onNext,
+          error: onError,
+          complete: onCompletion,
+        };
+      } else {
+        actualListeners = options;
+      }
+    } else {
+      actualListeners = {
+        next: options,
+        error: onNext,
+        complete: onError,
+      };
+    }
+
+    const { next, complete, error } = actualListeners;
+    this.emitter.on(QUERY_SNAPSHOT_NEXT_EVENT, next);
+    error && this.emitter.on(QUERY_SNAPSHOT_ERROR_EVENT, error);
+    complete && this.emitter.on(QUERY_SNAPSHOT_COMPLETE_EVENT, complete);
+
+    this.get().then((snapshot) => next(snapshot));
+
+    return () => {
+      this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, next);
+      error && this.emitter.off(QUERY_SNAPSHOT_ERROR_EVENT, error);
+      complete && this.emitter.off(QUERY_SNAPSHOT_COMPLETE_EVENT, complete);
+    };
   }
 
   withConverter<U>(converter: firebase.firestore.FirestoreDataConverter<U>): MockQuery<U> {
