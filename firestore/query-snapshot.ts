@@ -1,6 +1,6 @@
 import * as firebase from "firebase";
 import { MockQuery } from "./query";
-import { MockQueryDocumentSnapshot } from "./query-document-snapshot";
+import { MockQueryDocumentSnapshot } from "./document-snapshot";
 
 export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.QuerySnapshot<T> {

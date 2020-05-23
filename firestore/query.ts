@@ -1,11 +1,10 @@
 import * as firebase from "firebase";
-import { MockFirestore } from "./firestore";
-import { MockDocumentSnapshot } from "./document-snapshot";
-import { MockQueryDocumentSnapshot } from "./query-document-snapshot";
-import { MockQuerySnapshot } from "./query-snapshot";
 import { Observer } from "../util";
+import { MockQueryDocumentSnapshot } from "./document-snapshot";
+import { MockFirestore } from "./firestore";
+import { MockQuerySnapshot } from "./query-snapshot";
 
-type QueryFilter = (doc: MockDocumentSnapshot) => boolean;
+type QueryFilter = (doc: MockQueryDocumentSnapshot) => boolean;
 type Ordering = {
   fieldPath: string;
   direction: "asc" | "desc";

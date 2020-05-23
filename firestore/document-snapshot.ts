@@ -1,6 +1,5 @@
 import * as firebase from "firebase";
 import { MockDocumentReference } from "./document-reference";
-import { MockQueryDocumentSnapshot } from "./query-document-snapshot";
 
 export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.DocumentSnapshot<T> {
@@ -34,5 +33,20 @@ export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
   }
   isEqual(other: firebase.firestore.DocumentSnapshot<T>): boolean {
     throw new Error("Method not implemented.");
+  }
+}
+
+export class MockQueryDocumentSnapshot<T = firebase.firestore.DocumentData>
+  extends MockDocumentSnapshot<T>
+  implements firebase.firestore.QueryDocumentSnapshot<T> {
+  constructor(
+    ref: MockDocumentReference<T>,
+    public readonly _data: firebase.firestore.DocumentData
+  ) {
+    super(ref, _data);
+  }
+
+  data(options?: firebase.firestore.SnapshotOptions): T {
+    return this.ref.converter.fromFirestore(this, options || {});
   }
 }

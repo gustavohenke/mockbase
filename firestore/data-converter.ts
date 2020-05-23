@@ -1,5 +1,5 @@
 import * as firebase from "firebase";
-import { MockQueryDocumentSnapshot } from "./query-document-snapshot";
+import { MockQueryDocumentSnapshot } from "./document-snapshot";
 
 export const DEFAULT_DATA_CONVERTER: firebase.firestore.FirestoreDataConverter<firebase.firestore.DocumentData> = {
   fromFirestore(snapshot) {
