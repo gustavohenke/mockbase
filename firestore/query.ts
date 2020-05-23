@@ -138,7 +138,8 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   };
 
   get(options?: firebase.firestore.GetOptions): Promise<MockQuerySnapshot<T>> {
-    const allDocs = Array.from(this.firestore.collectionDocuments.values());
+    const collDocs = this.firestore.collectionDocuments.get(this.path) || new Set();
+    const allDocs = Array.from(collDocs.values());
     const allSnapshots = allDocs.map(
       (doc) =>
         new MockQueryDocumentSnapshot(

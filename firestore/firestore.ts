@@ -13,7 +13,7 @@ export class MockFirestore implements firebase.firestore.Firestore {
   private id = 0;
   public readonly documentData = new Map<string, firebase.firestore.DocumentData>();
   public readonly documentEvents = new Map<string, EventEmitter>();
-  public readonly collectionDocuments = new Map<string, string>();
+  public readonly collectionDocuments = new Map<string, Set<string>>();
   public readonly collectionEvents = new Map<string, EventEmitter>();
 
   constructor(public readonly app: MockApp) {}
@@ -27,6 +27,16 @@ export class MockFirestore implements firebase.firestore.Firestore {
 
   nextId() {
     return "__id" + this.id++;
+  }
+
+  writeDocument(doc: MockDocumentReference, data: firebase.firestore.DocumentData) {
+    this.documentData.set(doc.path, data);
+    let collectionDocs = this.collectionDocuments.get(doc.parent.path);
+    if (!collectionDocs) {
+      collectionDocs = new Set();
+      this.collectionDocuments.set(doc.parent.path, collectionDocs);
+    }
+    collectionDocs.add(doc.path);
   }
 
   batch(): firebase.firestore.WriteBatch {

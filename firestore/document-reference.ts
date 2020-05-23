@@ -46,11 +46,10 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
 
     const parsedData = this.converter.toFirestore(data);
 
-    this.firestore.documentData.set(
-      this.path,
+    this.firestore.writeDocument(
+      this,
       Object.assign(options.merge ? this.currentData : {}, parsedData)
     );
-    this.firestore.collectionDocuments.set(this.parent.path, this.path);
     await Promise.all([this.emitChange(), this.parent.emitChange()]);
   }
 
