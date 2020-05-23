@@ -1,6 +1,6 @@
 import { createMockInstance } from "jest-create-mock-instance";
 import { MockApp } from "../app";
-import { MockFirestore, DocumentReference, COLLECTION_CHANGE_EVENT } from "./";
+import { MockDocumentReference, MockFirestore } from "./";
 
 let firestore: MockFirestore;
 beforeEach(() => {
@@ -27,7 +27,7 @@ it("shares same data as other instances", async () => {
   await doc1.set({ foo: "bar" });
 
   const doc2 = firestore.doc("foo/bar");
-  expect(doc1.data).toEqual(doc2.data);
+  expect((await doc2.get()).data()).toEqual({ foo: "bar" });
 });
 
 describe("#collection()", () => {
@@ -52,14 +52,15 @@ describe("#get()", () => {
 });
 
 describe("#onSnapshot()", () => {
-  const createTests = (executor: (doc: DocumentReference, onNext: any) => () => void) => () => {
-    it("sets onNext and emits it right away", () => {
+  const createTests = (executor: (doc: MockDocumentReference, onNext: any) => () => void) => () => {
+    it("sets onNext and emits it right away", async () => {
       const doc = firestore.doc("foo/bar");
 
       const onNext = jest.fn();
       executor(doc, onNext);
 
-      return doc.get().then(snapshot => {
+      return doc.get().then((snapshot) => {
+        expect(onNext).toHaveBeenCalledTimes(1);
         expect(onNext).toHaveBeenCalledWith(snapshot);
       });
     });
@@ -71,20 +72,26 @@ describe("#onSnapshot()", () => {
       const disposer = executor(doc, onNext);
       disposer();
 
-      return doc.get().then(snapshot => {
-        expect(onNext).not.toHaveBeenCalled();
+      return doc.get().then((snapshot) => {
+        expect(onNext).toHaveBeenCalledTimes(1);
       });
     });
   };
 
-  describe("with listener args", createTests((doc, onNext) => doc.onSnapshot(onNext)));
+  describe(
+    "with listener args",
+    createTests((doc, onNext) => doc.onSnapshot(onNext))
+  );
 
   describe(
     "with options + listener args",
     createTests((doc, onNext) => doc.onSnapshot({}, onNext))
   );
 
-  describe("with observer arg", createTests((doc, onNext) => doc.onSnapshot({ next: onNext })));
+  describe(
+    "with observer arg",
+    createTests((doc, onNext) => doc.onSnapshot({ next: onNext }))
+  );
 
   describe(
     "with options + observer args",
@@ -99,7 +106,7 @@ describe("#set()", () => {
     await doc.set({ bla: "blabla" });
     await doc.set({ bar: "baz" });
 
-    expect(doc.data).toEqual({ bar: "baz" });
+    expect((await doc.get()).data()).toEqual({ bar: "baz" });
   });
 
   it("merges into current data if options.merge is true", async () => {
@@ -108,9 +115,9 @@ describe("#set()", () => {
     await doc.set({ bla: "blabla" });
     await doc.set({ bar: "baz" }, { merge: true });
 
-    expect(doc.data).toEqual({
+    expect((await doc.get()).data()).toEqual({
       bla: "blabla",
-      bar: "baz"
+      bar: "baz",
     });
   });
 
@@ -128,9 +135,8 @@ describe("#set()", () => {
 
   it("emits change events on the parent collection", async () => {
     const coll = firestore.collection("foo");
-
     const listener = jest.fn();
-    coll.emitter.on(COLLECTION_CHANGE_EVENT, listener);
+    coll.onSnapshot(listener);
 
     const doc = coll.doc("bar");
     await doc.set({ bla: "blabla" });
@@ -146,26 +152,26 @@ describe("#update()", () => {
       foo: 123,
       bar: { bar: 456 },
       baz: 789,
-      qux: false
+      qux: false,
     });
 
     await ref.update({
       "foo.foo": "foo",
       "bar.otherBar": "otherBar",
-      baz: "baz"
+      baz: "baz",
     });
 
     const doc = await ref.get();
     expect(doc.data()).toEqual({
       foo: {
-        foo: "foo"
+        foo: "foo",
       },
       bar: {
         bar: 456,
-        otherBar: "otherBar"
+        otherBar: "otherBar",
       },
       baz: "baz",
-      qux: false
+      qux: false,
     });
   });
 
@@ -187,7 +193,7 @@ describe("#update()", () => {
     await doc.set({ bla: "blabla" });
 
     const listener = jest.fn();
-    coll.emitter.on(COLLECTION_CHANGE_EVENT, listener);
+    coll.onSnapshot(listener);
     await doc.update({ bla: "BLA" });
 
     expect(listener).toHaveBeenCalled();
