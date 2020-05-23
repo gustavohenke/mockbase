@@ -54,9 +54,9 @@ export class MockFirestore implements firebase.firestore.Firestore {
   collection(collectionPath: string): MockCollectionReference<firebase.firestore.DocumentData> {
     this.setStateRunning();
 
-    const parts = collectionPath.split("/");
+    const parts = collectionPath.replace(/^\//, "").split("/");
     if (parts.length % 2 === 0) {
-      throw new Error("Not a collection path");
+      throw new Error("Not a collection path: " + collectionPath);
     }
 
     return new MockCollectionReference(
@@ -74,9 +74,9 @@ export class MockFirestore implements firebase.firestore.Firestore {
   doc(documentPath: string): MockDocumentReference<firebase.firestore.DocumentData> {
     this.setStateRunning();
 
-    const parts = documentPath.split("/");
+    const parts = documentPath.replace(/^\//, "").split("/");
     if (parts.length % 2 !== 0) {
-      throw new Error("Not a document path");
+      throw new Error("Not a document path: " + documentPath);
     }
     return new MockDocumentReference(
       this,
