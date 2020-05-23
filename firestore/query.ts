@@ -32,6 +32,10 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   ) {}
 
   public async emitChange() {
+    if (!this.emitter.hasListeners(QUERY_SNAPSHOT_NEXT_EVENT)) {
+      return;
+    }
+
     // TODO: this emits even if there wasn't an actual change with the current filters
     const snapshot = await this.get();
     this.emitter.emit(QUERY_SNAPSHOT_NEXT_EVENT, [snapshot]);
@@ -128,7 +132,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     b: MockQueryDocumentSnapshot<T>
   ) => {
     if (!this.ordering) {
-      return -1;
+      return 0;
     }
 
     const aValue = a.get(this.ordering.fieldPath);
@@ -147,6 +151,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
           this.firestore.documentData.get(doc)!
         )
     );
+
     const actualSnapshots = allSnapshots
       .filter((snapshot) => Object.values(this.filters).every((filter) => filter(snapshot)))
       .sort(this.compareFunction)
