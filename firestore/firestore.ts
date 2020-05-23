@@ -9,6 +9,7 @@ export class MockFirestore implements firebase.firestore.Firestore {
   // ?
   INTERNAL: { delete: () => Promise<void> };
 
+  private state: "running" | "terminated" | "not-started" = "not-started";
   private id = 0;
   public readonly documentData = new Map<string, firebase.firestore.DocumentData>();
   public readonly documentEvents = new Map<string, EventEmitter>();
@@ -16,6 +17,13 @@ export class MockFirestore implements firebase.firestore.Firestore {
   public readonly collectionEvents = new Map<string, EventEmitter>();
 
   constructor(public readonly app: MockApp) {}
+
+  private setStateRunning() {
+    if (this.state === "terminated") {
+      throw new Error("Firestore is terminated already");
+    }
+    this.state = "running";
+  }
 
   nextId() {
     return "__id" + this.id++;
@@ -30,7 +38,9 @@ export class MockFirestore implements firebase.firestore.Firestore {
   }
 
   enablePersistence(settings?: firebase.firestore.PersistenceSettings): Promise<void> {
-    throw new Error("Method not implemented.");
+    return this.state === "not-started"
+      ? Promise.resolve()
+      : Promise.reject(new Error("precondition-failed"));
   }
 
   enableNetwork(): Promise<void> {
@@ -42,6 +52,8 @@ export class MockFirestore implements firebase.firestore.Firestore {
   }
 
   collection(collectionPath: string): MockCollectionReference<firebase.firestore.DocumentData> {
+    this.setStateRunning();
+
     const parts = collectionPath.split("/");
     if (parts.length % 2 === 0) {
       throw new Error("Not a collection path");
@@ -60,6 +72,8 @@ export class MockFirestore implements firebase.firestore.Firestore {
   }
 
   doc(documentPath: string): MockDocumentReference<firebase.firestore.DocumentData> {
+    this.setStateRunning();
+
     const parts = documentPath.split("/");
     if (parts.length % 2 !== 0) {
       throw new Error("Not a document path");
@@ -91,6 +105,7 @@ export class MockFirestore implements firebase.firestore.Firestore {
   settings(settings: firebase.firestore.Settings): void {}
 
   terminate(): Promise<void> {
+    this.state = "terminated";
     return Promise.resolve();
   }
 

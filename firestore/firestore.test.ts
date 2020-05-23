@@ -53,8 +53,14 @@ describe("#doc()", () => {
 });
 
 describe("#enablePersistence()", () => {
-  it("can be called", () => {
-    return new MockFirestore(app).enablePersistence();
+  it("succeeds if Firestore instance is not started", async () => {
+    await expect(new MockFirestore(app).enablePersistence()).resolves.toBe(undefined);
+  });
+
+  it("fails if Firestore instance is not started", async () => {
+    const firestore = new MockFirestore(app);
+    firestore.collection("foo");
+    await expect(firestore.enablePersistence()).rejects.toThrowError("precondition-failed");
   });
 });
 
