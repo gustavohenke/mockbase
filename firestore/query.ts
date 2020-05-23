@@ -127,10 +127,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     throw new Error("Method not implemented.");
   }
 
-  private readonly compareFunction = (
-    a: MockQueryDocumentSnapshot<T>,
-    b: MockQueryDocumentSnapshot<T>
-  ) => {
+  private compareFunction(a: MockQueryDocumentSnapshot<T>, b: MockQueryDocumentSnapshot<T>) {
     if (!this.ordering) {
       return 0;
     }
@@ -139,7 +136,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     const bValue = b.get(this.ordering.fieldPath);
     const result = aValue <= bValue ? -1 : 1;
     return result * (this.ordering.direction === "asc" ? 1 : -1);
-  };
+  }
 
   get(options?: firebase.firestore.GetOptions): Promise<MockQuerySnapshot<T>> {
     const collDocs = this.firestore.collectionDocuments.get(this.path) || new Set();
@@ -154,7 +151,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
 
     const actualSnapshots = allSnapshots
       .filter((snapshot) => Object.values(this.filters).every((filter) => filter(snapshot)))
-      .sort(this.compareFunction)
+      .sort(this.compareFunction.bind(this))
       .slice(0, this.docsLimit);
 
     return Promise.resolve(new MockQuerySnapshot(this, actualSnapshots));
