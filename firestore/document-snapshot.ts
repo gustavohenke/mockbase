@@ -30,7 +30,7 @@ export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
     fieldPath: string | firebase.firestore.FieldPath,
     options?: firebase.firestore.SnapshotOptions | undefined
   ) {
-    fieldPath
+    return fieldPath
       .toString()
       .split(".")
       .reduce((obj, path) => (obj !== undefined ? obj[path] : obj), this._data);
