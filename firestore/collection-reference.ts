@@ -5,11 +5,6 @@ import { MockQuery } from "./query";
 
 export class MockCollectionReference<T = firebase.firestore.DocumentData> extends MockQuery<T>
   implements firebase.firestore.CollectionReference<T> {
-  get path(): string {
-    const parent = this.parent ? this.parent.path : "";
-    return parent + "/" + this.id;
-  }
-
   constructor(
     firestore: MockFirestore,
     public readonly id: string,

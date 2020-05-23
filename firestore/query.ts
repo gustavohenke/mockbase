@@ -30,6 +30,12 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     public converter: firebase.firestore.FirestoreDataConverter<T>
   ) {}
 
+  public async emitChange() {
+    // TODO: this emits even if there wasn't an actual change with the current filters
+    const snapshot = await this.get();
+    this.emitter.emit(QUERY_SNAPSHOT_NEXT_EVENT, [snapshot]);
+  }
+
   private clone(): MockQuery<T> {
     const query = new MockQuery(this.firestore, this.path, this.converter);
     Object.assign(query, this);

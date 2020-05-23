@@ -1,5 +1,6 @@
 import * as firebase from "firebase";
 import { EventEmitter, Observer } from "../util";
+import { MockCollectionReference } from "./collection-reference";
 import { MockDocumentSnapshot } from "./document-snapshot";
 import { MockFirestore } from "./firestore";
 
@@ -26,7 +27,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
   constructor(
     public readonly firestore: MockFirestore,
     public readonly id: string,
-    public readonly parent: firebase.firestore.CollectionReference<T>,
+    public readonly parent: MockCollectionReference<T>,
     public readonly converter: firebase.firestore.FirestoreDataConverter<T>
   ) {}
 
@@ -50,7 +51,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
       Object.assign(options.merge ? this.currentData : {}, parsedData)
     );
     this.firestore.collectionDocuments.set(this.parent.path, this.path);
-    await this.emitChange();
+    await Promise.all([this.emitChange(), this.parent.emitChange()]);
   }
 
   update(data: firebase.firestore.UpdateData): Promise<void>;
