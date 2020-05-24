@@ -149,6 +149,17 @@ describe("#set()", () => {
     });
   });
 
+  it("parses data with the converter", async () => {
+    const doc = firestore.doc("foo/bar");
+    const doc2 = doc.withConverter({
+      fromFirestore: jest.fn(),
+      toFirestore: jest.fn().mockReturnValue({ super: "fun" }),
+    });
+
+    await doc2.set({ foo: "bar" });
+    expect((await doc.get()).data()).toEqual({ super: "fun" });
+  });
+
   it("emits snapshot events", async () => {
     const doc = firestore.doc("foo/bar");
 
@@ -169,7 +180,7 @@ describe("#set()", () => {
     const doc = coll.doc("bar");
     await doc.set({ bla: "blabla" });
 
-    expect(listener).toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 });
 
