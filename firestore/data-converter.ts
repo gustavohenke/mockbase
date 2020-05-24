@@ -1,14 +1,14 @@
 import * as firebase from "firebase";
+import { MockQueryDocumentSnapshot } from "./document-snapshot";
 
-export class DataConverter
-  implements firebase.firestore.FirestoreDataConverter<firebase.firestore.DocumentData> {
-  toFirestore(modelObject: firebase.firestore.DocumentData): firebase.firestore.DocumentData {
+export const DEFAULT_DATA_CONVERTER: firebase.firestore.FirestoreDataConverter<firebase.firestore.DocumentData> = {
+  fromFirestore(snapshot) {
+    if (!(snapshot instanceof MockQueryDocumentSnapshot)) {
+      throw new Error("Can't convert from non-mocked Firestore");
+    }
+    return snapshot._data;
+  },
+  toFirestore(modelObject) {
     return modelObject;
-  }
-  fromFirestore(
-    snapshot: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData>,
-    options: firebase.firestore.SnapshotOptions
-  ): firebase.firestore.DocumentData {
-    return snapshot.data(options);
-  }
-}
+  },
+};

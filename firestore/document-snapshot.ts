@@ -1,16 +1,9 @@
 import * as firebase from "firebase";
-import { DocumentReference } from "./document-reference";
-import { MockFirestore } from "./firestore";
-import { QueryDocumentSnapshot } from "./query-document-snapshot";
-import { DataConverter } from "./data-converter";
+import { MockDocumentReference } from "./document-reference";
 
-export class DocumentSnapshot<T = firebase.firestore.DocumentData>
+export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.DocumentSnapshot<T> {
   metadata: firebase.firestore.SnapshotMetadata;
-
-  get firestore(): MockFirestore {
-    return this.ref.firestore;
-  }
 
   get id() {
     return this.ref.id;
@@ -21,35 +14,44 @@ export class DocumentSnapshot<T = firebase.firestore.DocumentData>
   }
 
   constructor(
-    public readonly ref: DocumentReference,
-    private readonly _data: firebase.firestore.DocumentData | undefined,
-    private readonly converter: firebase.firestore.FirestoreDataConverter<T>
+    public readonly ref: MockDocumentReference<T>,
+    public readonly _data: firebase.firestore.DocumentData | undefined
   ) {}
 
-  data(options?: firebase.firestore.SnapshotOptions): T | undefined {
+  data(options?: firebase.firestore.SnapshotOptions | undefined): T | undefined {
     if (this._data === undefined) {
       return undefined;
     }
-
-    const snapshot = new QueryDocumentSnapshot(this.ref, this._data, new DataConverter());
-    return this.converter.fromFirestore(snapshot, options || {});
+    const querySnapshot = new MockQueryDocumentSnapshot(this.ref, this._data);
+    return querySnapshot.data(options);
   }
 
-  get(fieldPath: string) {
+  get(
+    fieldPath: string | firebase.firestore.FieldPath,
+    options?: firebase.firestore.SnapshotOptions | undefined
+  ) {
     return fieldPath
+      .toString()
       .split(".")
       .reduce((obj, path) => (obj !== undefined ? obj[path] : obj), this._data);
   }
 
-  isEqual(other: firebase.firestore.DocumentSnapshot<any>): boolean {
-    const otherData = other.data();
-    const thisData = this.data();
-    if (!otherData || !thisData) {
-      return otherData === thisData;
-    }
+  isEqual(other: firebase.firestore.DocumentSnapshot<T>): boolean {
+    throw new Error("Method not implemented.");
+  }
+}
 
-    return Object.keys(otherData).every((key) => {
-      return otherData[key] === thisData[key];
-    });
+export class MockQueryDocumentSnapshot<T = firebase.firestore.DocumentData>
+  extends MockDocumentSnapshot<T>
+  implements firebase.firestore.QueryDocumentSnapshot<T> {
+  constructor(
+    ref: MockDocumentReference<T>,
+    public readonly _data: firebase.firestore.DocumentData
+  ) {
+    super(ref, _data);
+  }
+
+  data(options?: firebase.firestore.SnapshotOptions): T {
+    return this.ref.converter.fromFirestore(this, options || {});
   }
 }
