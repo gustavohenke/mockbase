@@ -43,12 +43,21 @@ describe("#isEqual()", () => {
     expect(query2.isEqual(query3)).toBe(true);
   });
 
-  it("returns false if the limit is not the same", () => {
+  it("returns false if #limit() is not the same", () => {
     const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
     const query2 = query1.limit(10);
     expect(query1.isEqual(query2)).toBe(false);
 
     const query3 = query1.limit(10);
+    expect(query2.isEqual(query3)).toBe(true);
+  });
+
+  it("returns false if #limitToLast() is not the same", () => {
+    const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
+    const query2 = query1.limitToLast(10);
+    expect(query1.isEqual(query2)).toBe(false);
+
+    const query3 = query1.limitToLast(10);
     expect(query2.isEqual(query3)).toBe(true);
   });
 
@@ -74,12 +83,56 @@ describe("#limit()", () => {
     expect(snapshot.docs).toHaveLength(2);
   });
 
-  it("limits by set value", async () => {
-    await coll.add({ foo: "bar" });
+  it("limits to first matching docs", async () => {
+    const doc1 = await coll.add({ foo: "bar" });
     await coll.add({ bar: "baz" });
 
     const snapshot = await coll.limit(1).get();
     expect(snapshot.docs).toHaveLength(1);
+    expect(snapshot.docs[0].id).toBe(doc1.id);
+  });
+
+  it("overrides #limitToLast()", async () => {
+    const doc1 = await coll.add({ foo: "bar" });
+    await coll.add({ bar: "baz" });
+
+    const snapshot = await coll.limitToLast(1).limit(1).get();
+    expect(snapshot.docs).toHaveLength(1);
+    expect(snapshot.docs[0].id).toBe(doc1.id);
+  });
+});
+
+describe("#limitToLast()", () => {
+  it("doesn't limit by default", async () => {
+    await coll.add({ foo: "bar" });
+    await coll.add({ bar: "baz" });
+
+    const snapshot = await coll.get();
+    expect(snapshot.docs).toHaveLength(2);
+  });
+
+  it("fails without ordering", async () => {
+    await coll.add({ foo: "bar" });
+    const snapshot = coll.limitToLast(1).get();
+    await expect(snapshot).rejects.toThrowError();
+  });
+
+  it("limits to last matching docs", async () => {
+    await coll.add({ foo: "bar" });
+    const doc2 = await coll.add({ bar: "baz" });
+
+    const snapshot = await coll.orderBy("bar").limitToLast(1).get();
+    expect(snapshot.docs).toHaveLength(1);
+    expect(snapshot.docs[0].id).toBe(doc2.id);
+  });
+
+  it("overrides #limit()", async () => {
+    await coll.add({ foo: "bar" });
+    const doc2 = await coll.add({ bar: "baz" });
+
+    const snapshot = await coll.orderBy("bar").limit(1).limitToLast(1).get();
+    expect(snapshot.docs).toHaveLength(1);
+    expect(snapshot.docs[0].id).toBe(doc2.id);
   });
 });
 
@@ -210,4 +263,18 @@ describe("#onSnapshot()", () => {
     "with options + observer args",
     createTests((doc, onNext) => doc.onSnapshot({}, { next: onNext }))
   );
+});
+
+describe("#withConverter()", () => {
+  it("sets the converter that will be used in snapshots", async () => {
+    await coll.add({ foo: "bar" });
+    const snapshot = await coll
+      .withConverter({
+        fromFirestore: jest.fn().mockReturnValue({ not: "bar" }),
+        toFirestore: jest.fn(),
+      })
+      .get();
+
+    expect(snapshot.docs[0].data()).toEqual({ not: "bar" });
+  });
 });

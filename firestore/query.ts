@@ -15,7 +15,8 @@ export const QUERY_SNAPSHOT_ERROR_EVENT = "snapshot:error";
 export const QUERY_SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
 
 export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.firestore.Query<T> {
-  private docsLimit = Infinity;
+  private docsStartLimit?: number;
+  private docsEndLimit?: number;
   private filters: Record<string, QueryFilter> = {};
   private ordering?: Ordering;
   public lastSnapshot?: MockQuerySnapshot<T>;
@@ -93,12 +94,16 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
 
   limit(limit: number): firebase.firestore.Query<T> {
     const query = this.clone();
-    query.docsLimit = limit;
+    query.docsStartLimit = limit;
+    query.docsEndLimit = undefined;
     return query;
   }
 
   limitToLast(limit: number): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+    const query = this.clone();
+    query.docsStartLimit = undefined;
+    query.docsEndLimit = limit;
+    return query;
   }
 
   startAt(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
@@ -137,8 +142,9 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
 
     const filtersMatch =
       Object.keys(other.filters).join(",") === Object.keys(this.filters).join(",");
-    const limitMatches = other.docsLimit === this.docsLimit;
-    if (!filtersMatch || !limitMatches) {
+    const limitsMatch =
+      other.docsStartLimit === this.docsStartLimit && other.docsEndLimit === this.docsEndLimit;
+    if (!filtersMatch || !limitsMatch) {
       return false;
     }
 
@@ -168,6 +174,10 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   }
 
   get(options?: firebase.firestore.GetOptions): Promise<MockQuerySnapshot<T>> {
+    if (!this.ordering && this.docsEndLimit) {
+      return Promise.reject(new Error("#orderBy() not specified with #limitToLast()"));
+    }
+
     const collDocs = this.firestore.collectionDocuments.get(this.path) || new Set();
     const allDocs = Array.from(collDocs.values());
     const allSnapshots = allDocs.map(
@@ -181,7 +191,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     const actualSnapshots = allSnapshots
       .filter((snapshot) => Object.values(this.filters).every((filter) => filter(snapshot)))
       .sort(this.compareFunction.bind(this))
-      .slice(0, this.docsLimit);
+      .slice(this.docsEndLimit ? -this.docsEndLimit : 0, this.docsStartLimit);
 
     return Promise.resolve(new MockQuerySnapshot(this, actualSnapshots));
   }
