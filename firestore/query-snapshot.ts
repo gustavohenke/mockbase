@@ -22,7 +22,42 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
   docChanges(
     options?: firebase.firestore.SnapshotListenOptions | undefined
   ): firebase.firestore.DocumentChange<T>[] {
-    throw new Error("Method not implemented.");
+    if (this === this.query.lastSnapshot || !this.query.lastSnapshot) {
+      // Short circuit: this is the first snapshot, so all items were added.
+      return this.docs.map((doc, newIndex) => ({
+        type: "added",
+        oldIndex: -1,
+        newIndex,
+        doc,
+      }));
+    }
+
+    const lastDocs = this.query.lastSnapshot?.docs || [];
+    const changes: firebase.firestore.DocumentChange<T>[] = [];
+    for (let thisDocIndex = 0; thisDocIndex < this.size; thisDocIndex++) {
+      const doc = this.docs[thisDocIndex];
+      const otherDocIndex = lastDocs.findIndex((oldDoc) => oldDoc.ref.path === doc.ref.path);
+      if (otherDocIndex === -1) {
+        // Not in the new snapshot. Removed.
+        changes.push({
+          type: "removed",
+          oldIndex: thisDocIndex,
+          newIndex: -1,
+          doc,
+        });
+        continue;
+      } else if (otherDocIndex !== thisDocIndex || !lastDocs[otherDocIndex].isEqual(doc)) {
+        // Different index or not the same content anymore? It's a change.
+        changes.push({
+          type: "modified",
+          oldIndex: thisDocIndex,
+          newIndex: otherDocIndex,
+          doc,
+        });
+      }
+    }
+
+    return changes;
   }
 
   forEach(

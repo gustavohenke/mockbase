@@ -18,6 +18,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   private docsLimit = Infinity;
   private filters: Record<string, QueryFilter> = {};
   private ordering?: Ordering;
+  public lastSnapshot?: MockQuerySnapshot<T>;
 
   protected get emitter() {
     const emitter = this.firestore.collectionEvents.get(this.path) || new EventEmitter();
@@ -38,6 +39,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
 
     // TODO: this emits even if there wasn't an actual change with the current filters
     const snapshot = await this.get();
+    this.lastSnapshot = snapshot;
     this.emitter.emit(QUERY_SNAPSHOT_NEXT_EVENT, [snapshot]);
   }
 
@@ -240,6 +242,12 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   withConverter<U>(converter: firebase.firestore.FirestoreDataConverter<U>): MockQuery<U> {
     const query = (this.clone() as unknown) as MockQuery<U>;
     query.converter = converter;
+    query.lastSnapshot =
+      this.lastSnapshot &&
+      new MockQuerySnapshot(
+        query,
+        (this.lastSnapshot.docs as unknown) as MockQueryDocumentSnapshot<U>[]
+      );
     return query;
   }
 }
