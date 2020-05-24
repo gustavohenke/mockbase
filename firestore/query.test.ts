@@ -1,6 +1,7 @@
 import { MockApp } from "../app";
 import { flushPromises } from "../util";
 import { MockCollectionReference, MockQuery, MockQuerySnapshot, MockFirestore } from ".";
+import { DEFAULT_DATA_CONVERTER } from "./data-converter";
 
 let coll: MockCollectionReference;
 let firestore: MockFirestore;
@@ -11,6 +12,57 @@ beforeEach(() => {
 
 it("exposes #firestore", () => {
   expect(coll.firestore).toBe(firestore);
+});
+
+describe("#isEqual()", () => {
+  it("returns false if Firestore instances are not the same", () => {
+    const firestore2 = new MockApp("app2").firestore();
+    const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
+    const query2 = new MockQuery(firestore2, "/foo", DEFAULT_DATA_CONVERTER);
+    expect(query1.isEqual(query2)).toBe(false);
+  });
+
+  it("returns false if the queries are not for the same collection", () => {
+    const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
+    const query2 = new MockQuery(firestore, "/bar", DEFAULT_DATA_CONVERTER);
+    expect(query1.isEqual(query2)).toBe(false);
+  });
+
+  it("returns false if the converter is not the same", () => {
+    const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
+    const query2 = query1.withConverter({ fromFirestore: jest.fn(), toFirestore: jest.fn() });
+    expect(query1.isEqual(query2)).toBe(false);
+  });
+
+  it("returns false if the filters are not the same", () => {
+    const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
+    const query2 = query1.where("foo", ">", 5);
+    expect(query1.isEqual(query2)).toBe(false);
+
+    const query3 = query1.where("foo", ">", 5);
+    expect(query2.isEqual(query3)).toBe(true);
+  });
+
+  it("returns false if the limit is not the same", () => {
+    const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
+    const query2 = query1.limit(10);
+    expect(query1.isEqual(query2)).toBe(false);
+
+    const query3 = query1.limit(10);
+    expect(query2.isEqual(query3)).toBe(true);
+  });
+
+  it("returns false if the ordering is not the same", () => {
+    const query1 = new MockQuery(firestore, "/foo", DEFAULT_DATA_CONVERTER);
+    const query2 = query1.orderBy("foo");
+    expect(query1.isEqual(query2)).toBe(false);
+
+    const query3 = query1.orderBy("foo", "desc");
+    expect(query2.isEqual(query3)).toBe(false);
+
+    const query4 = query1.orderBy("foo");
+    expect(query2.isEqual(query4)).toBe(true);
+  });
 });
 
 describe("#limit()", () => {

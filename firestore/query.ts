@@ -124,7 +124,34 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   }
 
   isEqual(other: firebase.firestore.Query<T>): boolean {
-    throw new Error("Method not implemented.");
+    if (
+      other.firestore !== this.firestore ||
+      !(other instanceof MockQuery) ||
+      other.path !== this.path ||
+      other.converter !== this.converter
+    ) {
+      return false;
+    }
+
+    const filtersMatch =
+      Object.keys(other.filters).join(",") === Object.keys(this.filters).join(",");
+    const limitMatches = other.docsLimit === this.docsLimit;
+    if (!filtersMatch || !limitMatches) {
+      return false;
+    }
+
+    if ((!other.ordering && this.ordering) || (other.ordering && !this.ordering)) {
+      return false;
+    }
+
+    const orderingMatches =
+      other.ordering?.direction === this.ordering?.direction &&
+      other.ordering?.fieldPath === this.ordering?.fieldPath;
+    if (!orderingMatches) {
+      return false;
+    }
+
+    return true;
   }
 
   private compareFunction(a: MockQueryDocumentSnapshot<T>, b: MockQueryDocumentSnapshot<T>) {

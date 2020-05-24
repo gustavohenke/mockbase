@@ -51,6 +51,34 @@ describe("#get()", () => {
   });
 });
 
+describe("#isEqual()", () => {
+  it("returns false if Firestore instances are not the same", () => {
+    const firestore2 = new MockFirestore(createMockInstance(MockApp));
+    const isEqual = firestore.doc("foo/bar").isEqual(firestore2.doc("foo/bar"));
+    expect(isEqual).toBe(false);
+  });
+
+  it("returns false if paths are not the same", () => {
+    const isEqual = firestore.doc("foo/bar").isEqual(firestore.doc("bar/bar"));
+    expect(isEqual).toBe(false);
+  });
+
+  it("returns false if converters are not the same", () => {
+    const isEqual = firestore.doc("foo/bar").isEqual(
+      firestore.doc("foo/bar").withConverter({
+        fromFirestore: jest.fn(),
+        toFirestore: jest.fn(),
+      })
+    );
+    expect(isEqual).toBe(false);
+  });
+
+  it("returns true otherwise", () => {
+    const isEqual = firestore.doc("foo/bar").isEqual(firestore.doc("foo/bar"));
+    expect(isEqual).toBe(true);
+  });
+});
+
 describe("#onSnapshot()", () => {
   const createTests = (executor: (doc: MockDocumentReference, onNext: any) => () => void) => () => {
     it("sets onNext and emits it right away", async () => {

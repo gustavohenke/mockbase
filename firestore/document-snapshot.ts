@@ -37,7 +37,12 @@ export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
   }
 
   isEqual(other: firebase.firestore.DocumentSnapshot<T>): boolean {
-    throw new Error("Method not implemented.");
+    // TODO: Do deep equality comparisons
+    return (
+      other instanceof MockDocumentSnapshot &&
+      other.ref.isEqual(this.ref) &&
+      other._data === this._data
+    );
   }
 }
 

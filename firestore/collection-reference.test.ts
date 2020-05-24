@@ -61,3 +61,31 @@ describe("#doc()", () => {
     expect(doc).toHaveProperty("id", "__id0");
   });
 });
+
+describe("#isEqual()", () => {
+  it("returns false if Firestore instances are not the same", () => {
+    const firestore2 = new MockFirestore(createMockInstance(MockApp));
+    const isEqual = firestore.collection("foo").isEqual(firestore2.collection("foo"));
+    expect(isEqual).toBe(false);
+  });
+
+  it("returns false if paths are not the same", () => {
+    const isEqual = firestore.collection("foo").isEqual(firestore.collection("bar"));
+    expect(isEqual).toBe(false);
+  });
+
+  it("returns false if converters are not the same", () => {
+    const isEqual = firestore.collection("foo").isEqual(
+      firestore.collection("foo").withConverter({
+        fromFirestore: jest.fn(),
+        toFirestore: jest.fn(),
+      })
+    );
+    expect(isEqual).toBe(false);
+  });
+
+  it("returns true otherwise", () => {
+    const isEqual = firestore.collection("foo").isEqual(firestore.collection("foo"));
+    expect(isEqual).toBe(true);
+  });
+});

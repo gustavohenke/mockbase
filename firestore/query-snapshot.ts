@@ -33,6 +33,10 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
   }
 
   isEqual(other: firebase.firestore.QuerySnapshot<T>): boolean {
-    throw new Error("Method not implemented.");
+    return (
+      other instanceof MockQuerySnapshot &&
+      other.size === this.size &&
+      other.docs.every((doc, index) => this.docs[index].isEqual(doc))
+    );
   }
 }

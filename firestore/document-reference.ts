@@ -36,9 +36,16 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
   ): firebase.firestore.CollectionReference<firebase.firestore.DocumentData> {
     return this.firestore.collection(this.path + "/" + collectionPath);
   }
+
   isEqual(other: firebase.firestore.DocumentReference<T>): boolean {
-    throw new Error("Method not implemented.");
+    return (
+      other.firestore === this.firestore &&
+      other.path === this.path &&
+      other instanceof MockDocumentReference &&
+      other.converter === this.converter
+    );
   }
+
   async set(data: T, options: firebase.firestore.SetOptions | undefined = {}): Promise<void> {
     if (options.mergeFields && options.mergeFields.length) {
       throw new Error("Option mergeFields is not supported");

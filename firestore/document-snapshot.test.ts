@@ -52,3 +52,29 @@ describe("#get()", () => {
     expect(doc.get("foo.bar")).toBe(undefined);
   });
 });
+
+describe("#isEqual()", () => {
+  it("returns false if `#ref`s are not equal", () => {
+    const ref2 = ref.parent.doc("baz");
+    const doc1 = new MockDocumentSnapshot(ref, {});
+    const doc2 = new MockDocumentSnapshot(ref2, {});
+    expect(doc1.isEqual(doc2)).toBe(false);
+
+    const ref3 = ref.parent.doc("baz");
+    const doc3 = new MockDocumentSnapshot(ref3, doc2._data);
+    expect(doc2.isEqual(doc3)).toBe(true);
+  });
+
+  it("returns whether data is the same", () => {
+    const doc1 = new MockDocumentSnapshot(ref, { foo: "baz" });
+    const doc2 = new MockDocumentSnapshot(ref, { foo: "bar" });
+    expect(doc1.isEqual(doc2)).toBe(false);
+
+    // TODO: Do deep equality comparison
+    const doc3 = new MockDocumentSnapshot(ref, { foo: "baz" });
+    expect(doc1.isEqual(doc3)).toBe(false);
+
+    const doc4 = new MockDocumentSnapshot(ref, doc1._data);
+    expect(doc1.isEqual(doc4)).toBe(true);
+  });
+});
