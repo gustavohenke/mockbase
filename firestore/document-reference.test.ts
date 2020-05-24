@@ -224,6 +224,39 @@ describe("#update()", () => {
     coll.onSnapshot(listener);
     await doc.update({ bla: "BLA" });
 
-    expect(listener).toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("#delete()", () => {
+  it("removes the document data", async () => {
+    const doc1 = firestore.doc("foo/bar");
+    const doc2 = firestore.doc("foo/bar");
+
+    await doc1.set({ baz: "qux" });
+    doc2.delete();
+
+    expect((await doc1.get()).exists).toBe(false);
+  });
+
+  it("emits snapshot events if doc exists", async () => {
+    const doc1 = firestore.doc("foo/bar");
+    await doc1.set({ baz: "qux" });
+
+    const listener = jest.fn();
+    doc1.onSnapshot(listener);
+    await doc1.delete();
+
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it("doesn't emit snapshot events if doc doesn't exist", async () => {
+    const doc1 = firestore.doc("foo/bar");
+
+    const listener = jest.fn();
+    doc1.onSnapshot(listener);
+    await doc1.delete();
+
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

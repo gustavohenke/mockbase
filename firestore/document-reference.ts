@@ -31,6 +31,12 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     public readonly converter: firebase.firestore.FirestoreDataConverter<T>
   ) {}
 
+  async emitChange() {
+    const snapshot = await this.get();
+    this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]);
+    this.parent.emitChange();
+  }
+
   collection(
     collectionPath: string
   ): firebase.firestore.CollectionReference<firebase.firestore.DocumentData> {
@@ -46,7 +52,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     );
   }
 
-  async set(data: T, options: firebase.firestore.SetOptions | undefined = {}): Promise<void> {
+  set(data: T, options: firebase.firestore.SetOptions | undefined = {}): Promise<void> {
     if (options.mergeFields && options.mergeFields.length) {
       throw new Error("Option mergeFields is not supported");
     }
@@ -57,7 +63,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
       this,
       Object.assign(options.merge ? this.currentData : {}, parsedData)
     );
-    await Promise.all([this.emitChange(), this.parent.emitChange()]);
+    return this.emitChange();
   }
 
   update(data: firebase.firestore.UpdateData): Promise<void>;
@@ -66,7 +72,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     value: any,
     ...moreFieldsAndValues: any[]
   ): Promise<void>;
-  async update(data: any, ...rest: any[]): Promise<void> {
+  update(data: any, ...rest: any[]): Promise<void> {
     if (typeof data === "string" || data instanceof firebase.firestore.FieldPath) {
       throw new Error("Document updating by field is not supported");
     }
@@ -85,16 +91,16 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
         return obj[part];
       }, this.currentData || {});
     });
-    await this.emitChange();
+    return this.emitChange();
   }
 
-  async emitChange() {
-    const snapshot = await this.get();
-    this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]);
-  }
+  async delete(): Promise<void> {
+    const existed = !!this.currentData;
+    this.firestore.documentData.delete(this.path);
 
-  delete(): Promise<void> {
-    throw new Error("Method not implemented.");
+    if (existed) {
+      await this.emitChange();
+    }
   }
 
   get(options?: firebase.firestore.GetOptions): Promise<firebase.firestore.DocumentSnapshot<T>> {
