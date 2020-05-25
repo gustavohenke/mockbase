@@ -1,10 +1,14 @@
 import * as firebase from "firebase";
 import { EventEmitter, Observer } from "../util";
-import { MockQueryDocumentSnapshot } from "./document-snapshot";
+import { MockQueryDocumentSnapshot, MockDocumentSnapshot } from "./document-snapshot";
 import { MockFirestore } from "./firestore";
 import { MockQuerySnapshot } from "./query-snapshot";
 
-type QueryFilter = (doc: MockQueryDocumentSnapshot) => boolean;
+type QueryFilter = (
+  doc: MockQueryDocumentSnapshot,
+  index: number,
+  allDocs: MockQueryDocumentSnapshot[]
+) => boolean;
 type Ordering = {
   fieldPath: string;
   direction: "asc" | "desc";
@@ -108,26 +112,86 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
 
   startAt(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
   startAt(...fieldValues: any[]): firebase.firestore.Query<T>;
-  startAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+  startAt(value?: any, ...rest: any[]): firebase.firestore.Query<T> {
+    const query = this.clone();
+    query.addStartFilter({ value, inclusive: true });
+    return query;
   }
 
   startAfter(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
   startAfter(...fieldValues: any[]): firebase.firestore.Query<T>;
-  startAfter(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+  startAfter(value?: any, ...rest: any[]): firebase.firestore.Query<T> {
+    const query = this.clone();
+    query.addStartFilter({ value, inclusive: false });
+    return query;
+  }
+
+  private addStartFilter({ value, inclusive }: { value: any; inclusive: boolean }): void {
+    const findStartingIndex: (docs: MockQueryDocumentSnapshot[], ordering: Ordering) => number =
+      value instanceof MockDocumentSnapshot
+        ? (docs) =>
+            docs.findIndex((doc) => {
+              return value.isEqual(doc);
+            }) + (inclusive ? 0 : 1)
+        : (docs, ordering) =>
+            docs.findIndex((doc) => {
+              const fieldValue = doc.get(ordering.fieldPath);
+              return inclusive ? fieldValue >= value : fieldValue > value;
+            });
+
+    this.filters["start"] = (_doc, index, allDocs) => {
+      const { ordering } = this;
+      if (!ordering) {
+        return true;
+      }
+
+      const startingIndex = findStartingIndex(allDocs, ordering);
+      return startingIndex <= index;
+    };
   }
 
   endBefore(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
   endBefore(...fieldValues: any[]): firebase.firestore.Query<T>;
-  endBefore(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+  endBefore(value?: any, ...rest: any[]): firebase.firestore.Query<T> {
+    const query = this.clone();
+    query.addEndFilter({ value, inclusive: false });
+    return query;
   }
 
   endAt(snapshot: firebase.firestore.DocumentSnapshot<any>): firebase.firestore.Query<T>;
   endAt(...fieldValues: any[]): firebase.firestore.Query<T>;
-  endAt(snapshot?: any, ...rest: any[]): firebase.firestore.Query<T> {
-    throw new Error("Method not implemented.");
+  endAt(value?: any, ...rest: any[]): firebase.firestore.Query<T> {
+    const query = this.clone();
+    query.addEndFilter({ value, inclusive: true });
+    return query;
+  }
+
+  private addEndFilter({ value, inclusive }: { value: any; inclusive: boolean }): void {
+    const findEndingIndex: (docs: MockQueryDocumentSnapshot[], ordering: Ordering) => number =
+      value instanceof MockDocumentSnapshot
+        ? (docs) =>
+            docs.findIndex((doc) => {
+              return value.isEqual(doc);
+            }) + (inclusive ? 1 : 0)
+        : (docs, ordering) =>
+            docs.length -
+            docs
+              .slice()
+              .reverse()
+              .findIndex((doc) => {
+                const fieldValue = doc.get(ordering.fieldPath);
+                return inclusive ? fieldValue <= value : fieldValue < value;
+              });
+
+    this.filters["end"] = (_doc, index, allDocs) => {
+      const { ordering } = this;
+      if (!ordering) {
+        return true;
+      }
+
+      const endingIndex = findEndingIndex(allDocs, ordering);
+      return endingIndex > index;
+    };
   }
 
   isEqual(other: firebase.firestore.Query<T>): boolean {
@@ -189,8 +253,10 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     );
 
     const actualSnapshots = allSnapshots
-      .filter((snapshot) => Object.values(this.filters).every((filter) => filter(snapshot)))
       .sort(this.compareFunction.bind(this))
+      .filter((snapshot, index) =>
+        Object.values(this.filters).every((filter) => filter(snapshot, index, allSnapshots))
+      )
       .slice(this.docsEndLimit ? -this.docsEndLimit : 0, this.docsStartLimit);
 
     return Promise.resolve(new MockQuerySnapshot(this, actualSnapshots));

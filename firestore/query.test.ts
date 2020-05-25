@@ -165,6 +165,134 @@ describe("#orderBy()", () => {
   });
 });
 
+describe("#startAt()", () => {
+  it("doesn't filter without ordering", async () => {
+    await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const snapshot = await coll.startAt(100).get();
+    expect(snapshot.size).toBe(2);
+  });
+
+  it("filters by field value, inclusive", async () => {
+    const doc1 = await coll.add({ foo: 60 });
+    const doc2 = await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const snapshot = await coll.orderBy("foo").startAt(60).get();
+    expect(snapshot.size).toBe(2);
+    expect(snapshot.docs[0].id).toBe(doc1.id);
+    expect(snapshot.docs[1].id).toBe(doc2.id);
+  });
+
+  it("filters by snapshot, inclusive", async () => {
+    const doc1 = await coll.add({ foo: 60 });
+    const doc2 = await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const docSnapshot = await doc1.get();
+    const snapshot = await coll.orderBy("foo").startAt(docSnapshot).get();
+    expect(snapshot.size).toBe(2);
+    expect(snapshot.docs[0].id).toBe(doc1.id);
+    expect(snapshot.docs[1].id).toBe(doc2.id);
+  });
+});
+
+describe("#startAfter()", () => {
+  it("doesn't filter without ordering", async () => {
+    await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const snapshot = await coll.startAfter(100).get();
+    expect(snapshot.size).toBe(2);
+  });
+
+  it("filters by field value, exclusive", async () => {
+    await coll.add({ foo: 60 });
+    const doc2 = await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const snapshot = await coll.orderBy("foo").startAfter(60).get();
+    expect(snapshot.size).toBe(1);
+    expect(snapshot.docs[0].id).toBe(doc2.id);
+  });
+
+  it("filters by snapshot, exclusive", async () => {
+    const doc1 = await coll.add({ foo: 60 });
+    const doc2 = await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const docSnapshot = await doc1.get();
+    const snapshot = await coll.orderBy("foo").startAfter(docSnapshot).get();
+    expect(snapshot.size).toBe(1);
+    expect(snapshot.docs[0].id).toBe(doc2.id);
+  });
+});
+
+describe("#endAt()", () => {
+  it("doesn't filter without ordering", async () => {
+    await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const snapshot = await coll.endAt(100).get();
+    expect(snapshot.size).toBe(2);
+  });
+
+  it("filters by field value, inclusive", async () => {
+    const doc1 = await coll.add({ foo: 60 });
+    await coll.add({ foo: 100 });
+    const doc3 = await coll.add({ foo: 50 });
+
+    const snapshot = await coll.orderBy("foo").endAt(60).get();
+    expect(snapshot.size).toBe(2);
+    expect(snapshot.docs[0].id).toBe(doc3.id);
+    expect(snapshot.docs[1].id).toBe(doc1.id);
+  });
+
+  it("filters by snapshot, inclusive", async () => {
+    const doc1 = await coll.add({ foo: 60 });
+    await coll.add({ foo: 100 });
+    const doc3 = await coll.add({ foo: 50 });
+
+    const docSnapshot = await doc1.get();
+    const snapshot = await coll.orderBy("foo").endAt(docSnapshot).get();
+    expect(snapshot.size).toBe(2);
+    expect(snapshot.docs[0].id).toBe(doc3.id);
+    expect(snapshot.docs[1].id).toBe(doc1.id);
+  });
+});
+
+describe("#endBefore()", () => {
+  it("doesn't filter without ordering", async () => {
+    await coll.add({ foo: 100 });
+    await coll.add({ foo: 50 });
+
+    const snapshot = await coll.endBefore(100).get();
+    expect(snapshot.size).toBe(2);
+  });
+
+  it("filters by field value, exclusive", async () => {
+    await coll.add({ foo: 60 });
+    await coll.add({ foo: 100 });
+    const doc3 = await coll.add({ foo: 50 });
+
+    const snapshot = await coll.orderBy("foo").endBefore(60).get();
+    expect(snapshot.size).toBe(1);
+    expect(snapshot.docs[0].id).toBe(doc3.id);
+  });
+
+  it("filters by snapshot, exclusive", async () => {
+    const doc1 = await coll.add({ foo: 60 });
+    await coll.add({ foo: 100 });
+    const doc3 = await coll.add({ foo: 50 });
+
+    const docSnapshot = await doc1.get();
+    const snapshot = await coll.orderBy("foo").endBefore(docSnapshot).get();
+    expect(snapshot.size).toBe(1);
+    expect(snapshot.docs[0].id).toBe(doc3.id);
+  });
+});
+
 describe("#where()", () => {
   it("adds a == query", async () => {
     const doc1 = await coll.add({ foo: "bar" });
