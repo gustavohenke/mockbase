@@ -306,7 +306,6 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
         actualListeners = {
           next: onNext,
           error: onError,
-          complete: onCompletion,
         };
       } else {
         actualListeners = options;
@@ -315,14 +314,12 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
       actualListeners = {
         next: options,
         error: onNext,
-        complete: onError,
       };
     }
 
-    const { next, complete, error } = actualListeners;
+    const { next, error } = actualListeners;
     this.emitter.on(QUERY_SNAPSHOT_NEXT_EVENT, next);
     error && this.emitter.on(QUERY_SNAPSHOT_ERROR_EVENT, error);
-    complete && this.emitter.on(QUERY_SNAPSHOT_COMPLETE_EVENT, complete);
 
     if (!this.noInitialSnapshot) {
       this.get().then((snapshot) => next(snapshot));
@@ -331,7 +328,6 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     return () => {
       this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, next);
       error && this.emitter.off(QUERY_SNAPSHOT_ERROR_EVENT, error);
-      complete && this.emitter.off(QUERY_SNAPSHOT_COMPLETE_EVENT, complete);
     };
   }
 

@@ -81,7 +81,6 @@ export class MockCollectionGroup<T = firebase.firestore.DocumentData> extends Mo
         actualListeners = {
           next: onNext,
           error: onError,
-          complete: onCompletion,
         };
       } else {
         actualListeners = options;
@@ -90,11 +89,10 @@ export class MockCollectionGroup<T = firebase.firestore.DocumentData> extends Mo
       actualListeners = {
         next: options,
         error: onNext,
-        complete: onError,
       };
     }
 
-    const { next, complete, error } = actualListeners;
+    const { next, error } = actualListeners;
 
     const listenerIndex = this.activeListeners.length;
     this.activeListeners.push({
@@ -108,8 +106,7 @@ export class MockCollectionGroup<T = firebase.firestore.DocumentData> extends Mo
               this.get().then((snapshot) => {
                 next(snapshot);
               }),
-            error,
-            complete
+            error
           );
       }),
     });

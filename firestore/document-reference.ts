@@ -6,7 +6,6 @@ import { MockFirestore } from "./firestore";
 
 export const SNAPSHOT_NEXT_EVENT = "snapshot:next";
 export const SNAPSHOT_ERROR_EVENT = "snapshot:error";
-export const SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
 
 export class MockDocumentReference<T = firebase.firestore.DocumentData>
   implements firebase.firestore.DocumentReference<T> {
@@ -135,7 +134,6 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
         actualListeners = {
           next: onNext,
           error: onError,
-          complete: onCompletion,
         };
       } else {
         actualListeners = options;
@@ -144,14 +142,12 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
       actualListeners = {
         next: options,
         error: onNext,
-        complete: onError,
       };
     }
 
-    const { next, complete, error } = actualListeners;
+    const { next, error } = actualListeners;
     this.emitter.on(SNAPSHOT_NEXT_EVENT, next);
     error && this.emitter.on(SNAPSHOT_ERROR_EVENT, error);
-    complete && this.emitter.on(SNAPSHOT_COMPLETE_EVENT, complete);
 
     // Don't emit SNAPSHOT_NEXT_EVENT otherwise every listener will get it
     this.get().then((snapshot) => next(snapshot));
@@ -159,7 +155,6 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     return () => {
       this.emitter.off(SNAPSHOT_NEXT_EVENT, next);
       error && this.emitter.off(SNAPSHOT_ERROR_EVENT, error);
-      complete && this.emitter.off(SNAPSHOT_COMPLETE_EVENT, complete);
     };
   }
 
