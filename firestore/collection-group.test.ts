@@ -41,7 +41,7 @@ describe("#onSnapshot()", () => {
     expect(onNext).toHaveBeenCalledTimes(2);
   });
 
-  it("adds listeners to next snapshot of new collections", async () => {
+  it("adds listeners to next snapshot of new matching collections", async () => {
     const onNext = jest.fn();
     firestore.collectionGroup("foo").onSnapshot(onNext);
 
@@ -51,6 +51,16 @@ describe("#onSnapshot()", () => {
     firestore.collection("yet/another/foo").add({ baz: 4 });
     await flushPromises();
     expect(onNext).toHaveBeenCalledTimes(2);
+  });
+
+  it("doesn't add listeners to new collections that don't match", async () => {
+    const onNext = jest.fn();
+    firestore.collectionGroup("foo").onSnapshot(onNext);
+    await flushPromises();
+
+    firestore.collection("woohoo").add({ baz: 4 });
+    await flushPromises();
+    expect(onNext).toHaveBeenCalledTimes(1);
   });
 
   it("disposes of subscribed collections", async () => {
