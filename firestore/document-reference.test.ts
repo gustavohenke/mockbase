@@ -214,6 +214,11 @@ describe("#update()", () => {
     });
   });
 
+  it("fails when the document doesn't exist", async () => {
+    const promise = firestore.doc("foo/bar").update({ baz: "yes" });
+    await expect(promise).rejects.toBeUndefined();
+  });
+
   it("emits snapshot events", async () => {
     const doc = firestore.doc("foo/bar");
     await doc.set({ bla: "blabla" });
