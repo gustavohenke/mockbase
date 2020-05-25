@@ -1,6 +1,7 @@
 import { createMockInstance } from "jest-create-mock-instance";
 import { MockApp } from "../app";
 import { MockFirestore } from "./";
+import { MockCollectionGroup } from "./collection-group";
 
 let app: MockApp;
 beforeEach(() => {
@@ -32,6 +33,21 @@ describe("#collection()", () => {
     const coll = new MockFirestore(app).collection("foo");
     expect(coll.parent).toBeNull();
   });
+
+  it("throws if instance is terminated", () => {
+    const firestore = new MockFirestore(app);
+    firestore.terminate();
+    const bomb = () => firestore.collection("foo");
+    expect(bomb).toThrowError();
+  });
+});
+
+describe("#collectionGroup()", () => {
+  it("returns a collection group", () => {
+    const firestore = new MockFirestore(app);
+    const group = firestore.collectionGroup("foo");
+    expect(group).toBeInstanceOf(MockCollectionGroup);
+  });
 });
 
 describe("#doc()", () => {
@@ -49,6 +65,13 @@ describe("#doc()", () => {
     expect(doc.parent.parent!.id).toBe("bar");
     expect(doc.parent.parent!.parent.id).toBe("foo");
     expect(doc.parent.parent!.parent.parent).toBeNull();
+  });
+
+  it("throws if instance is terminated", () => {
+    const firestore = new MockFirestore(app);
+    firestore.terminate();
+    const bomb = () => firestore.doc("foo/bar");
+    expect(bomb).toThrowError();
   });
 });
 

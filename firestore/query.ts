@@ -19,11 +19,12 @@ export const QUERY_SNAPSHOT_ERROR_EVENT = "snapshot:error";
 export const QUERY_SNAPSHOT_COMPLETE_EVENT = "snapshot:complete";
 
 export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.firestore.Query<T> {
-  private docsStartLimit?: number;
-  private docsEndLimit?: number;
-  private filters: Record<string, QueryFilter> = {};
-  private ordering?: Ordering;
+  protected docsStartLimit?: number;
+  protected docsEndLimit?: number;
+  protected filters: Record<string, QueryFilter> = {};
+  protected ordering?: Ordering;
   public lastSnapshot?: MockQuerySnapshot<T>;
+  private noInitialSnapshot = false;
 
   protected get emitter() {
     const emitter = this.firestore.collectionEvents.get(this.path) || new EventEmitter();
@@ -48,7 +49,12 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     this.emitter.emit(QUERY_SNAPSHOT_NEXT_EVENT, [snapshot]);
   }
 
-  private clone(): MockQuery<T> {
+  setNoInitialSnapshot(): this {
+    this.noInitialSnapshot = true;
+    return this;
+  }
+
+  protected clone(): MockQuery<T> {
     const query = new MockQuery(this.firestore, this.path, this.converter);
     Object.assign(query, this);
     query.filters = Object.assign({}, this.filters);
@@ -242,13 +248,20 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     return result * direction;
   }
 
+  /**
+   * Gets a list of doc keys that should be fetched by the #get() method.
+   * Made protected so that the collection group implementation can override it.
+   */
+  protected getCandidateDocKeys() {
+    return this.firestore.collectionDocuments.get(this.path) || new Set();
+  }
+
   get(options?: firebase.firestore.GetOptions): Promise<MockQuerySnapshot<T>> {
     if (!this.ordering && this.docsEndLimit) {
       return Promise.reject(new Error("#orderBy() not specified with #limitToLast()"));
     }
 
-    const collDocs = this.firestore.collectionDocuments.get(this.path) || new Set();
-    const allDocs = Array.from(collDocs.values());
+    const allDocs = Array.from(this.getCandidateDocKeys().values());
     const allSnapshots = allDocs.map(
       (doc) =>
         new MockQueryDocumentSnapshot(
@@ -311,7 +324,9 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     error && this.emitter.on(QUERY_SNAPSHOT_ERROR_EVENT, error);
     complete && this.emitter.on(QUERY_SNAPSHOT_COMPLETE_EVENT, complete);
 
-    this.get().then((snapshot) => next(snapshot));
+    if (!this.noInitialSnapshot) {
+      this.get().then((snapshot) => next(snapshot));
+    }
 
     return () => {
       this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, next);

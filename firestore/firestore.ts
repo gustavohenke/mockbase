@@ -4,6 +4,9 @@ import { EventEmitter } from "../util";
 import { MockCollectionReference } from "./collection-reference";
 import { DEFAULT_DATA_CONVERTER } from "./data-converter";
 import { MockDocumentReference } from "./document-reference";
+import { MockCollectionGroup } from "./collection-group";
+
+const NEW_COLLECTION_EVENT = "collection:new";
 
 export class MockFirestore implements firebase.firestore.Firestore {
   // ?
@@ -15,6 +18,7 @@ export class MockFirestore implements firebase.firestore.Firestore {
   public readonly documentEvents = new Map<string, EventEmitter>();
   public readonly collectionDocuments = new Map<string, Set<string>>();
   public readonly collectionEvents = new Map<string, EventEmitter>();
+  private readonly emitter = new EventEmitter();
 
   constructor(public readonly app: MockApp) {}
 
@@ -35,8 +39,13 @@ export class MockFirestore implements firebase.firestore.Firestore {
     if (!collectionDocs) {
       collectionDocs = new Set();
       this.collectionDocuments.set(doc.parent.path, collectionDocs);
+      this.emitter.emit(NEW_COLLECTION_EVENT, [doc.parent.path]);
     }
     collectionDocs.add(doc.path);
+  }
+
+  onNewCollection(listener: (path: string) => void) {
+    this.emitter.on(NEW_COLLECTION_EVENT, listener);
   }
 
   batch(): firebase.firestore.WriteBatch {
@@ -77,8 +86,8 @@ export class MockFirestore implements firebase.firestore.Firestore {
     );
   }
 
-  collectionGroup(collectionId: string): firebase.firestore.Query<firebase.firestore.DocumentData> {
-    throw new Error("Method not implemented.");
+  collectionGroup(collectionId: string): MockCollectionGroup<firebase.firestore.DocumentData> {
+    return new MockCollectionGroup(this, collectionId, DEFAULT_DATA_CONVERTER);
   }
 
   doc(documentPath: string): MockDocumentReference<firebase.firestore.DocumentData> {

@@ -20,7 +20,7 @@ export class MockCollectionReference<T = firebase.firestore.DocumentData> extend
     return this.firestore.doc(this.path + "/" + documentPath).withConverter(this.converter);
   }
 
-  add(data: T): Promise<firebase.firestore.DocumentReference<T>> {
+  add(data: T): Promise<MockDocumentReference<T>> {
     const doc = this.doc();
     return doc.set(data).then(() => doc);
   }
