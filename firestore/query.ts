@@ -231,10 +231,15 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
       return 0;
     }
 
+    const direction = this.ordering.direction === "asc" ? 1 : -1;
     const aValue = a.get(this.ordering.fieldPath);
     const bValue = b.get(this.ordering.fieldPath);
-    const result = aValue <= bValue ? -1 : 1;
-    return result * (this.ordering.direction === "asc" ? 1 : -1);
+    if (aValue == null || bValue == null) {
+      return aValue === bValue ? 0 : (aValue == null ? -1 : 1) * direction;
+    }
+
+    const result = aValue === bValue ? 0 : aValue < bValue ? -1 : 1;
+    return result * direction;
   }
 
   get(options?: firebase.firestore.GetOptions): Promise<MockQuerySnapshot<T>> {
