@@ -37,12 +37,40 @@ export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
   }
 
   isEqual(other: firebase.firestore.DocumentSnapshot<T>): boolean {
-    // TODO: Do deep equality comparisons
     return (
       other instanceof MockDocumentSnapshot &&
       other.ref.isEqual(this.ref) &&
-      other._data === this._data
+      MockDocumentSnapshot.isDeepEqual(this._data, other._data)
     );
+  }
+
+  private static isDeepEqual(
+    a?: firebase.firestore.DocumentData,
+    b?: firebase.firestore.DocumentData
+  ) {
+    if (a === b) {
+      // Data is exactly the same
+      return true;
+    } else if (a == null || b == null || typeof a !== "object" || typeof b !== "object") {
+      // Either is undefined
+      return false;
+    }
+
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) {
+      // The key set is different
+      return false;
+    }
+
+    for (const key of aKeys) {
+      if (!bKeys.includes(key) || !MockDocumentSnapshot.isDeepEqual(a[key], b[key])) {
+        // Either key doesn't exist or the value is deeply not the same
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 

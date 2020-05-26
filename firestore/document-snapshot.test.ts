@@ -70,9 +70,8 @@ describe("#isEqual()", () => {
     const doc2 = new MockDocumentSnapshot(ref, { foo: "bar" });
     expect(doc1.isEqual(doc2)).toBe(false);
 
-    // TODO: Do deep equality comparison
     const doc3 = new MockDocumentSnapshot(ref, { foo: "baz" });
-    expect(doc1.isEqual(doc3)).toBe(false);
+    expect(doc1.isEqual(doc3)).toBe(true);
 
     const doc4 = new MockDocumentSnapshot(ref, doc1._data);
     expect(doc1.isEqual(doc4)).toBe(true);
