@@ -242,6 +242,17 @@ describe("#update()", () => {
 
     expect(listener).toHaveBeenCalledTimes(2);
   });
+
+  it("does not emit events if no value actually changed", async () => {
+    const doc = firestore.doc("foo/bar");
+    await doc.set({ bla: "blabla" });
+
+    const onNext = jest.fn();
+    doc.onSnapshot(onNext);
+
+    await doc.update({ bla: "blabla" });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("#delete()", () => {

@@ -71,7 +71,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     value: any,
     ...moreFieldsAndValues: any[]
   ): Promise<void>;
-  update(data: any, ...rest: any[]): Promise<void> {
+  async update(data: any, ...rest: any[]): Promise<void> {
     if (typeof data === "string" || data instanceof firebase.firestore.FieldPath) {
       throw new Error("Document updating by field is not supported");
     }
@@ -79,18 +79,24 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
       return Promise.reject();
     }
 
+    let changed = false;
     Object.keys(data).forEach((key) => {
       key.split(".").reduce((obj, part, index, path) => {
         if (path.length === index + 1) {
+          changed = changed || data[key] !== obj[part] || obj[part] === undefined;
           obj[part] = data[key];
         } else {
+          changed = changed || obj[part] === undefined;
           obj[part] = typeof obj[part] === "object" ? obj[part] : {};
         }
 
         return obj[part];
       }, this.currentData || {});
     });
-    return this.emitChange();
+
+    if (changed) {
+      await this.emitChange();
+    }
   }
 
   async delete(): Promise<void> {
