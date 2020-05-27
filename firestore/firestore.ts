@@ -5,6 +5,7 @@ import { MockCollectionReference } from "./collection-reference";
 import { DEFAULT_DATA_CONVERTER } from "./data-converter";
 import { MockDocumentReference } from "./document-reference";
 import { MockCollectionGroup } from "./collection-group";
+import { MockWriteBatch } from "./write-batch";
 
 const NEW_COLLECTION_EVENT = "collection:new";
 
@@ -48,8 +49,8 @@ export class MockFirestore implements firebase.firestore.Firestore {
     this.emitter.on(NEW_COLLECTION_EVENT, listener);
   }
 
-  batch(): firebase.firestore.WriteBatch {
-    throw new Error("Method not implemented.");
+  batch(): MockWriteBatch {
+    return new MockWriteBatch(this);
   }
 
   clearPersistence(): Promise<void> {

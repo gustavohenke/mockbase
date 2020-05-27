@@ -27,10 +27,15 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     public readonly firestore: MockFirestore,
     public readonly id: string,
     public readonly parent: MockCollectionReference<T>,
-    public readonly converter: firebase.firestore.FirestoreDataConverter<T>
+    public readonly converter: firebase.firestore.FirestoreDataConverter<T>,
+    private readonly emitEvents = true
   ) {}
 
   async emitChange() {
+    if (!this.emitEvents) {
+      return;
+    }
+
     const snapshot = await this.get();
     this.emitter.emit(SNAPSHOT_NEXT_EVENT, [snapshot]);
     this.parent.emitChange();
@@ -75,8 +80,10 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     if (typeof data === "string" || data instanceof firebase.firestore.FieldPath) {
       throw new Error("Document updating by field is not supported");
     }
-    if (this.currentData === undefined) {
-      return Promise.reject();
+
+    const initialData = this.currentData;
+    if (initialData === undefined) {
+      throw new Error(`Document doesn't exist: ${this.path}`);
     }
 
     let changed = false;
@@ -91,7 +98,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
         }
 
         return obj[part];
-      }, this.currentData || {});
+      }, initialData);
     });
 
     if (changed) {
@@ -108,7 +115,7 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
     }
   }
 
-  get(options?: firebase.firestore.GetOptions): Promise<firebase.firestore.DocumentSnapshot<T>> {
+  get(options?: firebase.firestore.GetOptions): Promise<MockDocumentSnapshot<T>> {
     return Promise.resolve(
       new MockDocumentSnapshot(this, this.currentData ? Object.assign(this.currentData) : undefined)
     );
