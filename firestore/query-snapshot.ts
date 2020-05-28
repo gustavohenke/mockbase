@@ -32,7 +32,7 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
       }));
     }
 
-    const lastDocs = this.query.lastSnapshot?.docs || [];
+    const lastDocs = this.query.lastSnapshot.docs;
     const changes: firebase.firestore.DocumentChange<T>[] = [];
     for (let thisDocIndex = 0; thisDocIndex < this.size; thisDocIndex++) {
       const doc = this.docs[thisDocIndex];
