@@ -3,11 +3,13 @@ import { MockDocumentReference } from "./document-reference";
 
 export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.DocumentSnapshot<T> {
-  metadata: firebase.firestore.SnapshotMetadata = {
-    fromCache: true,
-    hasPendingWrites: false,
-    isEqual: () => true,
-  };
+  get metadata(): firebase.firestore.SnapshotMetadata {
+    return {
+      fromCache: true,
+      hasPendingWrites: false,
+      isEqual: () => true,
+    };
+  }
 
   get id() {
     return this.ref.id;
