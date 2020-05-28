@@ -4,7 +4,11 @@ import { MockQueryDocumentSnapshot } from "./document-snapshot";
 
 export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.QuerySnapshot<T> {
-  metadata: firebase.firestore.SnapshotMetadata;
+  readonly metadata: firebase.firestore.SnapshotMetadata = {
+    fromCache: true,
+    hasPendingWrites: false,
+    isEqual: () => true,
+  };
 
   get size() {
     return this.docs.length;
