@@ -81,10 +81,11 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
       throw new Error("Document updating by field is not supported");
     }
 
-    const initialData = this.currentData;
-    if (initialData === undefined) {
+    if (this.currentData === undefined) {
       throw new Error(`Document doesn't exist: ${this.path}`);
     }
+
+    const currentData = { ...this.currentData };
 
     let changed = false;
     Object.keys(data).forEach((key) => {
@@ -98,19 +99,20 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
         }
 
         return obj[part];
-      }, initialData);
+      }, currentData);
     });
 
     if (changed) {
+      this.firestore.writeDocument(this, currentData);
       await this.emitChange();
     }
   }
 
   async delete(): Promise<void> {
     const existed = !!this.currentData;
-    this.firestore.documentData.delete(this.path);
 
     if (existed) {
+      this.firestore.writeDocument(this, undefined);
       await this.emitChange();
     }
   }

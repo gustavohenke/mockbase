@@ -6,6 +6,7 @@ import { DEFAULT_DATA_CONVERTER } from "./data-converter";
 import { MockDocumentReference } from "./document-reference";
 import { MockCollectionGroup } from "./collection-group";
 import { MockWriteBatch } from "./write-batch";
+import { MockTransaction } from "./transaction";
 
 const NEW_COLLECTION_EVENT = "collection:new";
 
@@ -15,13 +16,18 @@ export class MockFirestore implements firebase.firestore.Firestore {
 
   private state: "running" | "terminated" | "not-started" = "not-started";
   private id = 0;
-  public readonly documentData = new Map<string, firebase.firestore.DocumentData>();
+  public readonly documentData: Map<string, firebase.firestore.DocumentData>;
   public readonly documentEvents = new Map<string, EventEmitter>();
   public readonly collectionDocuments = new Map<string, Set<string>>();
   public readonly collectionEvents = new Map<string, EventEmitter>();
   private readonly emitter = new EventEmitter();
 
-  constructor(public readonly app: MockApp) {}
+  constructor(
+    public readonly app: MockApp,
+    initialData = new Map<string, firebase.firestore.DocumentData>()
+  ) {
+    this.documentData = new Map(initialData);
+  }
 
   private setStateRunning() {
     if (this.state === "terminated") {
@@ -34,19 +40,32 @@ export class MockFirestore implements firebase.firestore.Firestore {
     return "__id" + this.id++;
   }
 
-  writeDocument(doc: MockDocumentReference, data: firebase.firestore.DocumentData) {
-    this.documentData.set(doc.path, data);
-    let collectionDocs = this.collectionDocuments.get(doc.parent.path);
-    if (!collectionDocs) {
-      collectionDocs = new Set();
-      this.collectionDocuments.set(doc.parent.path, collectionDocs);
-      this.emitter.emit(NEW_COLLECTION_EVENT, [doc.parent.path]);
+  writeDocument(
+    doc: MockDocumentReference<any>,
+    data: firebase.firestore.DocumentData | undefined
+  ) {
+    const { path, parent } = doc;
+    if (data === undefined) {
+      this.documentData.delete(path);
+      this.collectionDocuments.get(parent.path)?.delete(path);
+    } else {
+      this.documentData.set(path, data);
+      let collectionDocs = this.collectionDocuments.get(parent.path);
+      if (!collectionDocs) {
+        collectionDocs = new Set();
+        this.collectionDocuments.set(parent.path, collectionDocs);
+        this.emitter.emit(NEW_COLLECTION_EVENT, [parent.path]);
+      }
+      collectionDocs.add(path);
     }
-    collectionDocs.add(doc.path);
   }
 
   onNewCollection(listener: (path: string) => void) {
     this.emitter.on(NEW_COLLECTION_EVENT, listener);
+  }
+
+  clone() {
+    return new MockFirestore(this.app, this.documentData);
   }
 
   batch(): MockWriteBatch {
@@ -106,10 +125,13 @@ export class MockFirestore implements firebase.firestore.Firestore {
     );
   }
 
-  runTransaction<T>(
+  async runTransaction<T>(
     updateFunction: (transaction: firebase.firestore.Transaction) => Promise<T>
   ): Promise<T> {
-    throw new Error("Method not implemented.");
+    const transaction = new MockTransaction(this);
+    const result = await updateFunction(transaction);
+    await transaction.commit();
+    return result;
   }
 
   onSnapshotsInSync(observer: {

@@ -4,25 +4,25 @@ import { MockFirestore } from "./";
 import { MockCollectionGroup } from "./collection-group";
 
 let app: MockApp;
+let firestore: MockFirestore;
 beforeEach(() => {
   app = createMockInstance(MockApp);
+  firestore = new MockFirestore(app);
 });
 
 it("exposes #app", () => {
-  const firestore = new MockFirestore(app);
   expect(firestore).toHaveProperty("app", app);
 });
 
 describe("#collection()", () => {
   it("throws if a doc path is provided", () => {
-    const firestore = new MockFirestore(app);
     const bomb = () => firestore.collection("foo/bar");
 
     expect(bomb).toThrowError();
   });
 
   it("builds thru the collection path", () => {
-    const coll = new MockFirestore(app).collection("foo/bar/baz");
+    const coll = firestore.collection("foo/bar/baz");
     expect(coll.id).toBe("baz");
     expect(coll.parent!.id).toBe("bar");
     expect(coll.parent!.parent.id).toBe("foo");
@@ -30,12 +30,11 @@ describe("#collection()", () => {
   });
 
   it("returns first-level collection with null parent", () => {
-    const coll = new MockFirestore(app).collection("foo");
+    const coll = firestore.collection("foo");
     expect(coll.parent).toBeNull();
   });
 
   it("throws if instance is terminated", () => {
-    const firestore = new MockFirestore(app);
     firestore.terminate();
     const bomb = () => firestore.collection("foo");
     expect(bomb).toThrowError();
@@ -44,7 +43,6 @@ describe("#collection()", () => {
 
 describe("#collectionGroup()", () => {
   it("returns a collection group", () => {
-    const firestore = new MockFirestore(app);
     const group = firestore.collectionGroup("foo");
     expect(group).toBeInstanceOf(MockCollectionGroup);
   });
@@ -52,14 +50,13 @@ describe("#collectionGroup()", () => {
 
 describe("#doc()", () => {
   it("throws if a collection path is provided", () => {
-    const firestore = new MockFirestore(app);
     const bomb = () => firestore.doc("foo");
 
     expect(bomb).toThrowError();
   });
 
   it("builds thru the collection path", () => {
-    const doc = new MockFirestore(app).doc("foo/bar/baz/qux");
+    const doc = firestore.doc("foo/bar/baz/qux");
     expect(doc.id).toBe("qux");
     expect(doc.parent.id).toBe("baz");
     expect(doc.parent.parent!.id).toBe("bar");
@@ -68,10 +65,28 @@ describe("#doc()", () => {
   });
 
   it("throws if instance is terminated", () => {
-    const firestore = new MockFirestore(app);
     firestore.terminate();
     const bomb = () => firestore.doc("foo/bar");
     expect(bomb).toThrowError();
+  });
+});
+
+describe("#runTransaction()", () => {
+  it("awaits commit to complete", async () => {
+    const banana = firestore.doc("fruits/banana");
+    await firestore.runTransaction(async (transaction) => {
+      transaction.set(banana, { color: "yellow" });
+    });
+    expect(firestore.documentData.get(banana.path)).toEqual({ color: "yellow" });
+  });
+
+  it("returns returned value from transaction function", async () => {
+    const banana = firestore.doc("fruits/banana");
+    const result = await firestore.runTransaction(async (transaction) => {
+      transaction.set(banana, { color: "brown" });
+      return "banana is now rotten";
+    });
+    expect(result).toBe("banana is now rotten");
   });
 });
 
