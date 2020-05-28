@@ -73,7 +73,9 @@ export class MockFirestore implements firebase.firestore.Firestore {
   }
 
   clearPersistence(): Promise<void> {
-    throw new Error("Method not implemented.");
+    return this.state !== "running"
+      ? Promise.resolve()
+      : Promise.reject(new Error("precondition-failed"));
   }
 
   enablePersistence(settings?: firebase.firestore.PersistenceSettings): Promise<void> {
@@ -83,11 +85,11 @@ export class MockFirestore implements firebase.firestore.Firestore {
   }
 
   enableNetwork(): Promise<void> {
-    throw new Error("Method not implemented.");
+    return Promise.resolve();
   }
 
   disableNetwork(): Promise<void> {
-    throw new Error("Method not implemented.");
+    return Promise.resolve();
   }
 
   collection(collectionPath: string): MockCollectionReference<firebase.firestore.DocumentData> {

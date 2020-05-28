@@ -90,13 +90,25 @@ describe("#runTransaction()", () => {
   });
 });
 
+describe("#clearPersistence()", () => {
+  it("succeeds if Firestore instance is not running", async () => {
+    await expect(firestore.clearPersistence()).resolves.toBe(undefined);
+    await firestore.terminate();
+    await expect(firestore.clearPersistence()).resolves.toBe(undefined);
+  });
+
+  it("fails if Firestore instance is running", async () => {
+    firestore.collection("foo");
+    await expect(firestore.clearPersistence()).rejects.toThrowError("precondition-failed");
+  });
+});
+
 describe("#enablePersistence()", () => {
   it("succeeds if Firestore instance is not started", async () => {
     await expect(new MockFirestore(app).enablePersistence()).resolves.toBe(undefined);
   });
 
-  it("fails if Firestore instance is not started", async () => {
-    const firestore = new MockFirestore(app);
+  it("fails if Firestore instance is running", async () => {
     firestore.collection("foo");
     await expect(firestore.enablePersistence()).rejects.toThrowError("precondition-failed");
   });

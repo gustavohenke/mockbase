@@ -24,6 +24,11 @@ describe("#data()", () => {
     expect(doc.data()).toEqual({ foo: "bar" });
   });
 
+  it("returns undefined data", () => {
+    const doc = new MockDocumentSnapshot(ref, undefined);
+    expect(doc.data()).toBeUndefined();
+  });
+
   it("returns converted data from the DocumentReference", () => {
     const converter = {
       fromFirestore: jest.fn().mockReturnValue({ baz: "qux" }),

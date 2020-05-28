@@ -25,6 +25,13 @@ describe("#get()", () => {
     expect(snapshot.docs).toHaveLength(3);
     expect(snapshot.docs[0].ref.path).toBe(docs[0].path);
     expect(snapshot.docs[1].ref.path).toBe(docs[1].path);
+    expect(snapshot.docs[1].ref.path).toBe(docs[1].path);
+  });
+
+  it("snapshots all matching collections and applies filters", async () => {
+    const snapshot = await firestore.collectionGroup("foo").limit(1).get();
+    expect(snapshot.docs).toHaveLength(1);
+    expect(snapshot.docs[0].ref.path).toBe(docs[0].path);
   });
 });
 
