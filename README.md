@@ -2,7 +2,7 @@
 [![Build status](https://img.shields.io/travis/gustavohenke/mockbase.svg?style=flat-square)](https://travis-ci.org/gustavohenke/mockbase)
 [![Coverage](https://img.shields.io/coveralls/github/gustavohenke/mockbase.svg?style=flat-square)](https://coveralls.io/github/gustavohenke/mockbase)
 
-Firebase v6+ mock. Great for unit testing and [Storybooks](https://storybook.js.org).
+Firebase v7+ mock. Great for unit testing and [Storybooks](https://storybook.js.org).
 Built-in support for TypeScript included.
 
 However, please note that not all features are implemented.
@@ -30,9 +30,10 @@ addTodo('Clean home up', app.firestore().collection('todo'));
 ## Implemented features
 | Feature group | Status |
 | ------------- | ------ |
-| Auth          | Partly implemented |
-| Database      | Not implemented |
-| Firestore     | Partly implemented |
-| Messaging     | Not implemented |
-| Storage       | Not implemented |
+| Auth          | ⚠️ Partly implemented |
+| Database      | ❌ Not implemented |
+| Firestore     | ✅ Implemented* |
+| Messaging     | ❌ Not implemented |
+| Storage       | ❌ Not implemented |
 
+_*_ There's no difference between server and cache, thus there won't be pending writes.
