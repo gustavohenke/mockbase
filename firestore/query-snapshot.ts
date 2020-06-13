@@ -4,6 +4,10 @@ import { MockQueryDocumentSnapshot } from "./document-snapshot";
 
 export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.QuerySnapshot<T> {
+  private get previousSnapshot(): MockQuerySnapshot<T> | undefined {
+    return this.query.snapshotVersions[this.version - 1];
+  }
+
   readonly metadata: firebase.firestore.SnapshotMetadata = {
     fromCache: true,
     hasPendingWrites: false,
@@ -20,13 +24,14 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
 
   constructor(
     public readonly query: MockQuery<T>,
-    public readonly docs: MockQueryDocumentSnapshot<T>[]
+    public readonly docs: MockQueryDocumentSnapshot<T>[],
+    private readonly version: number = query.snapshotVersions.length
   ) {}
 
   docChanges(
     options?: firebase.firestore.SnapshotListenOptions | undefined
   ): firebase.firestore.DocumentChange<T>[] {
-    if (this === this.query.lastSnapshot || !this.query.lastSnapshot) {
+    if (!this.previousSnapshot) {
       // Short circuit: this is the first snapshot, so all items were added.
       return this.docs.map((doc, newIndex) => ({
         type: "added",
@@ -36,29 +41,54 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
       }));
     }
 
-    const lastDocs = this.query.lastSnapshot.docs;
+    const iterationSize = Math.max(this.previousSnapshot.size, this.size);
+    const checkedPaths = new Set<string>();
+    const previousDocs = this.previousSnapshot.docs;
     const changes: firebase.firestore.DocumentChange<T>[] = [];
-    for (let thisDocIndex = 0; thisDocIndex < this.size; thisDocIndex++) {
-      const doc = this.docs[thisDocIndex];
-      const otherDocIndex = lastDocs.findIndex((oldDoc) => oldDoc.ref.path === doc.ref.path);
-      if (otherDocIndex === -1) {
+    for (let i = 0; i < iterationSize; i++) {
+      const doc = this.docs[i] || previousDocs[i];
+      if (checkedPaths.has(doc.ref.path)) {
+        // This is a document which has a lower index in the current snapshot.
+        // Skip it to avoid adding a modified change twice for it.
+        continue;
+      }
+
+      const newIndex =
+        doc === this.docs[i]
+          ? i
+          : this.docs.findIndex((another) => another.ref.path === doc.ref.path);
+      const oldIndex =
+        doc === previousDocs[i]
+          ? i
+          : previousDocs.findIndex((another) => another.ref.path === doc.ref.path);
+
+      if (oldIndex === -1) {
+        // Not in the old snapshot. Added.
+        changes.push({
+          type: "added",
+          oldIndex,
+          newIndex,
+          doc,
+        });
+      } else if (newIndex === -1) {
         // Not in the new snapshot. Removed.
         changes.push({
           type: "removed",
-          oldIndex: thisDocIndex,
-          newIndex: -1,
+          oldIndex,
+          newIndex,
           doc,
         });
-        continue;
-      } else if (otherDocIndex !== thisDocIndex || !lastDocs[otherDocIndex].isEqual(doc)) {
+      } else if (oldIndex !== newIndex || !previousDocs[oldIndex].isEqual(this.docs[newIndex])) {
         // Different index or not the same content anymore? It's a change.
         changes.push({
           type: "modified",
-          oldIndex: thisDocIndex,
-          newIndex: otherDocIndex,
-          doc,
+          oldIndex,
+          newIndex,
+          doc: this.docs[newIndex],
         });
       }
+
+      checkedPaths.add(doc.ref.path);
     }
 
     return changes;

@@ -9,8 +9,11 @@ beforeEach(() => {
   query = new MockFirestore(createMockInstance(MockApp)).collection("foo");
 });
 
-const createSnapshot = (docs: MockQueryDocumentSnapshot<any>[]) =>
-  new MockQuerySnapshot(query, docs);
+const createSnapshot = (docs: MockQueryDocumentSnapshot<any>[]) => {
+  const snapshot = new MockQuerySnapshot(query, docs);
+  query.snapshotVersions.push(snapshot);
+  return snapshot;
+};
 
 it("exposes lists of docs in #docs", () => {
   const docs = [
@@ -66,55 +69,28 @@ describe("#docChanges()", () => {
     });
   });
 
-  // this emulates the first next event from onSnapshot().
-  it("lists all docs as added if this is the first snapshot", () => {
-    const docs = [
-      createMockInstance(MockQueryDocumentSnapshot),
-      createMockInstance(MockQueryDocumentSnapshot),
-    ];
-
-    const snapshot = createSnapshot(docs);
-    query.lastSnapshot = snapshot;
-
-    const changes = snapshot.docChanges();
-    expect(changes).toHaveLength(2);
-    expect(changes).toContainEqual({
-      type: "added",
-      oldIndex: -1,
-      newIndex: 0,
-      doc: docs[0],
-    });
-    expect(changes).toContainEqual({
-      type: "added",
-      oldIndex: -1,
-      newIndex: 1,
-      doc: docs[1],
-    });
-  });
-
   it("lists docs as modified when they have moved in the last snapshot", async () => {
     const docs = [
       new MockQueryDocumentSnapshot(query.firestore.doc("foo/bar"), {}),
       new MockQueryDocumentSnapshot(query.firestore.doc("foo/baz"), {}),
     ];
 
-    const snapshot1 = createSnapshot(docs);
+    createSnapshot(docs);
     const snapshot2 = createSnapshot([docs[1], docs[0]]);
-    query.lastSnapshot = snapshot2;
 
-    const changes = snapshot1.docChanges();
+    const changes = snapshot2.docChanges();
     expect(changes).toHaveLength(2);
-    expect(changes).toContainEqual({
-      type: "modified",
-      oldIndex: 0,
-      newIndex: 1,
-      doc: docs[0],
-    });
     expect(changes).toContainEqual({
       type: "modified",
       oldIndex: 1,
       newIndex: 0,
       doc: docs[1],
+    });
+    expect(changes).toContainEqual({
+      type: "modified",
+      oldIndex: 0,
+      newIndex: 1,
+      doc: docs[0],
     });
   });
 
@@ -122,36 +98,53 @@ describe("#docChanges()", () => {
     const doc1 = new MockQueryDocumentSnapshot(query.firestore.doc("foo/bar"), {});
     const doc2 = new MockQueryDocumentSnapshot(query.firestore.doc("foo/bar"), { some: "foo" });
 
-    const snapshot1 = createSnapshot([doc1]);
+    createSnapshot([doc1]);
     const snapshot2 = createSnapshot([doc2]);
-    query.lastSnapshot = snapshot2;
 
-    const changes = snapshot1.docChanges();
+    const changes = snapshot2.docChanges();
     expect(changes).toHaveLength(1);
     expect(changes).toContainEqual({
       type: "modified",
       oldIndex: 0,
       newIndex: 0,
-      doc: doc1,
+      doc: doc2,
     });
   });
 
-  it("lists docs as removed when they are not in the last snapshot", async () => {
+  it("lists docs as removed when they are not in the current snapshot", async () => {
     const docs = [
       new MockQueryDocumentSnapshot(query.firestore.doc("foo/bar"), {}),
       new MockQueryDocumentSnapshot(query.firestore.doc("foo/baz"), {}),
     ];
 
-    const snapshot1 = createSnapshot(docs);
+    createSnapshot(docs);
     const snapshot2 = createSnapshot([docs[0]]);
-    query.lastSnapshot = snapshot2;
 
-    const changes = snapshot1.docChanges();
+    const changes = snapshot2.docChanges();
     expect(changes).toHaveLength(1);
     expect(changes).toContainEqual({
       type: "removed",
       oldIndex: 1,
       newIndex: -1,
+      doc: docs[1],
+    });
+  });
+
+  it("lists docs as added when they are not in the previous snapshot", async () => {
+    const docs = [
+      new MockQueryDocumentSnapshot(query.firestore.doc("foo/bar"), {}),
+      new MockQueryDocumentSnapshot(query.firestore.doc("foo/baz"), {}),
+    ];
+
+    createSnapshot([docs[0]]);
+    const snapshot2 = createSnapshot(docs);
+
+    const changes = snapshot2.docChanges();
+    expect(changes).toHaveLength(1);
+    expect(changes).toContainEqual({
+      type: "added",
+      oldIndex: -1,
+      newIndex: 1,
       doc: docs[1],
     });
   });
