@@ -22,6 +22,11 @@ it("exposes #path", () => {
   expect(doc.path).toBe("/foo/bar");
 });
 
+it("exposes #parent", () => {
+  const doc = firestore.doc("foo/bar");
+  expect(doc.parent.path).toBe("/foo");
+});
+
 it("shares same data as other instances", async () => {
   const doc1 = firestore.doc("foo/bar");
   await doc1.set({ foo: "bar" });
@@ -285,5 +290,17 @@ describe("#delete()", () => {
     await doc1.delete();
 
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("emits change events on the parent collection", async () => {
+    const coll = firestore.collection("foo");
+    const doc = coll.doc("bar");
+    await doc.set({ bla: "blabla" });
+
+    const listener = jest.fn();
+    coll.onSnapshot(listener);
+    await doc.delete();
+
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 });

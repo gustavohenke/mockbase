@@ -24,7 +24,6 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   protected filters: Record<string, QueryFilter> = {};
   protected ordering?: Ordering;
   private noInitialSnapshot = false;
-  public snapshotVersions: MockQuerySnapshot<T>[] = [];
 
   protected get emitter() {
     const emitter = this.firestore.collectionEvents.get(this.path) || new EventEmitter();
@@ -45,7 +44,6 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
 
     // TODO: this emits even if there wasn't an actual change with the current filters
     const snapshot = await this.get();
-    this.snapshotVersions.push(snapshot);
     this.emitter.emit(QUERY_SNAPSHOT_NEXT_EVENT, [snapshot]);
   }
 
@@ -58,8 +56,6 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     const query = new MockQuery(this.firestore, this.path, this.converter);
     Object.assign(query, this);
     query.filters = Object.assign({}, this.filters);
-    // Extending the original query with new filters/ordering voids the snapshot version cache.
-    query.snapshotVersions = [];
     return query;
   }
 
@@ -299,7 +295,7 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
     onCompletion?: (() => void) | undefined
   ): () => void;
   onSnapshot(options: any, onNext?: any, onError?: any, onCompletion?: any): () => void {
-    let actualListeners: Observer<firebase.firestore.QuerySnapshot<T>>;
+    let actualListeners: Observer<MockQuerySnapshot<T>>;
 
     if (typeof options === "object") {
       if (typeof onNext === "object") {
@@ -319,16 +315,22 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
       };
     }
 
+    let prevSnapshot: MockQuerySnapshot<T>;
     const { next, error } = actualListeners;
-    this.emitter.on(QUERY_SNAPSHOT_NEXT_EVENT, next);
+    const actualNext = (snapshot: MockQuerySnapshot<T>) => {
+      const surrogate = new MockQuerySnapshot(this, snapshot.docs, prevSnapshot);
+      next(surrogate);
+      prevSnapshot = surrogate;
+    };
+    this.emitter.on(QUERY_SNAPSHOT_NEXT_EVENT, actualNext);
     error && this.emitter.on(QUERY_SNAPSHOT_ERROR_EVENT, error);
 
     if (!this.noInitialSnapshot) {
-      this.get().then((snapshot) => next(snapshot));
+      this.get().then((snapshot) => actualNext(snapshot));
     }
 
     return () => {
-      this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, next);
+      this.emitter.off(QUERY_SNAPSHOT_NEXT_EVENT, actualNext);
       error && this.emitter.off(QUERY_SNAPSHOT_ERROR_EVENT, error);
     };
   }
@@ -336,14 +338,6 @@ export class MockQuery<T = firebase.firestore.DocumentData> implements firebase.
   withConverter<U>(converter: firebase.firestore.FirestoreDataConverter<U>): MockQuery<U> {
     const query = (this.clone() as unknown) as MockQuery<U>;
     query.converter = converter;
-    query.snapshotVersions = this.snapshotVersions.map(
-      (snapshot, version) =>
-        new MockQuerySnapshot(
-          query,
-          (snapshot.docs as unknown) as MockQueryDocumentSnapshot<U>[],
-          version
-        )
-    );
     return query;
   }
 }

@@ -4,14 +4,15 @@ import { MockFirestore, MockQuerySnapshot } from "./";
 import { MockQueryDocumentSnapshot } from "./document-snapshot";
 import { MockQuery } from "./query";
 
+let snapshot: MockQuerySnapshot | undefined;
 let query: MockQuery;
 beforeEach(() => {
+  snapshot = undefined;
   query = new MockFirestore(createMockInstance(MockApp)).collection("foo");
 });
 
 const createSnapshot = (docs: MockQueryDocumentSnapshot<any>[]) => {
-  const snapshot = new MockQuerySnapshot(query, docs);
-  query.snapshotVersions.push(snapshot);
+  snapshot = new MockQuerySnapshot(query, docs, snapshot);
   return snapshot;
 };
 
@@ -35,7 +36,7 @@ it("exposes #size as the length of #docs", () => {
   expect(query.size).toBe(docs.length);
 });
 
-it("exposes #empty as the true when #docs.length = 0", () => {
+it("exposes #empty as true when #docs.length = 0", () => {
   const docs = [createMockInstance(MockQueryDocumentSnapshot)];
 
   const query1 = createSnapshot(docs);

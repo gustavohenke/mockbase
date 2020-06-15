@@ -4,10 +4,6 @@ import { MockQueryDocumentSnapshot } from "./document-snapshot";
 
 export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.QuerySnapshot<T> {
-  private get previousSnapshot(): MockQuerySnapshot<T> | undefined {
-    return this.query.snapshotVersions[this.version - 1];
-  }
-
   readonly metadata: firebase.firestore.SnapshotMetadata = {
     fromCache: true,
     hasPendingWrites: false,
@@ -25,7 +21,7 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
   constructor(
     public readonly query: MockQuery<T>,
     public readonly docs: MockQueryDocumentSnapshot<T>[],
-    private readonly version: number = query.snapshotVersions.length
+    private readonly previousSnapshot?: MockQuerySnapshot<T> | undefined
   ) {}
 
   docChanges(
