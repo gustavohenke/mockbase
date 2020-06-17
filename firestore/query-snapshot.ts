@@ -60,7 +60,7 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
         });
       }
 
-      if (previousDoc) checkedPaths.add(previousDoc.ref.path);
+      checkedPaths.add(doc.ref.path);
     }
 
     for (const [oldIndex, doc] of previousDocs.entries()) {
@@ -71,6 +71,8 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
           newIndex: -1,
           doc,
         });
+
+        checkedPaths.add(doc.ref.path);
       }
     }
 
