@@ -37,54 +37,41 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
       }));
     }
 
-    const iterationSize = Math.max(this.previousSnapshot.size, this.size);
-    const checkedPaths = new Set<string>();
+    const checkedDocs = new Set();
     const previousDocs = this.previousSnapshot.docs;
     const changes: firebase.firestore.DocumentChange<T>[] = [];
-    for (let i = 0; i < iterationSize; i++) {
-      const doc = this.docs[i] || previousDocs[i];
-      if (checkedPaths.has(doc.ref.path)) {
-        // This is a document which has a lower index in the current snapshot.
-        // Skip it to avoid adding a modified change twice for it.
-        continue;
-      }
 
-      const newIndex =
-        doc === this.docs[i]
-          ? i
-          : this.docs.findIndex((another) => another.ref.path === doc.ref.path);
-      const oldIndex =
-        doc === previousDocs[i]
-          ? i
-          : previousDocs.findIndex((another) => another.ref.path === doc.ref.path);
-
-      if (oldIndex === -1) {
-        // Not in the old snapshot. Added.
+    for (const [newIndex, doc] of this.docs.entries()) {
+      const oldIndex = previousDocs.findIndex(({ id }) => id === doc.id);
+      const previousDoc = oldIndex > -1 ? previousDocs[oldIndex] : null;
+      if (!previousDoc) {
         changes.push({
           type: "added",
-          oldIndex,
+          oldIndex: -1,
           newIndex,
           doc,
         });
-      } else if (newIndex === -1) {
-        // Not in the new snapshot. Removed.
-        changes.push({
-          type: "removed",
-          oldIndex,
-          newIndex,
-          doc,
-        });
-      } else if (oldIndex !== newIndex || !previousDocs[oldIndex].isEqual(this.docs[newIndex])) {
-        // Different index or not the same content anymore? It's a change.
+      } else if (!previousDoc.isEqual(doc) || newIndex !== oldIndex) {
         changes.push({
           type: "modified",
           oldIndex,
           newIndex,
-          doc: this.docs[newIndex],
+          doc,
         });
       }
 
-      checkedPaths.add(doc.ref.path);
+      if (previousDoc) checkedDocs.add(previousDoc.id);
+    }
+
+    for (const [oldIndex, doc] of previousDocs.entries()) {
+      if (!checkedDocs.has(doc.id)) {
+        changes.push({
+          type: "removed",
+          oldIndex,
+          newIndex: -1,
+          doc,
+        });
+      }
     }
 
     return changes;
