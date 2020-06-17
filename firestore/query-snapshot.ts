@@ -51,7 +51,7 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
           newIndex,
           doc,
         });
-      } else if (!previousDoc.isEqual(doc) || newIndex !== oldIndex) {
+      } else if (newIndex !== oldIndex || !previousDoc.isEqual(doc)) {
         changes.push({
           type: "modified",
           oldIndex,
