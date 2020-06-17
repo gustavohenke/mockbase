@@ -43,11 +43,11 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
 
     for (const [newIndex, doc] of this.docs.entries()) {
       const oldIndex = previousDocs.findIndex(({ ref }) => ref.path === doc.ref.path);
-      const previousDoc = oldIndex > -1 ? previousDocs[oldIndex] : null;
+      const previousDoc = previousDocs[oldIndex];
       if (!previousDoc) {
         changes.push({
           type: "added",
-          oldIndex: -1,
+          oldIndex,
           newIndex,
           doc,
         });
