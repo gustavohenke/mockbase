@@ -160,16 +160,15 @@ export class MockDocumentReference<T = firebase.firestore.DocumentData>
       };
     }
 
-    const { next, error } = actualListeners;
-    this.emitter.on(SNAPSHOT_NEXT_EVENT, next);
-    error && this.emitter.on(SNAPSHOT_ERROR_EVENT, error);
+    this.emitter.on(SNAPSHOT_NEXT_EVENT, actualListeners.next);
+    actualListeners.error && this.emitter.on(SNAPSHOT_ERROR_EVENT, actualListeners.error);
 
     // Don't emit SNAPSHOT_NEXT_EVENT otherwise every listener will get it
-    this.get().then((snapshot) => next(snapshot));
+    this.get().then((snapshot) => actualListeners.next(snapshot));
 
     return () => {
-      this.emitter.off(SNAPSHOT_NEXT_EVENT, next);
-      error && this.emitter.off(SNAPSHOT_ERROR_EVENT, error);
+      this.emitter.off(SNAPSHOT_NEXT_EVENT, actualListeners.next);
+      actualListeners.error && this.emitter.off(SNAPSHOT_ERROR_EVENT, actualListeners.error);
     };
   }
 

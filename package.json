@@ -18,6 +18,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "git clean -Xf **/*.js **/*.js.map **/*.d.ts",
+    "lint": "prettier --check --ignore-path .gitignore .",
     "prepare": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch --notify"

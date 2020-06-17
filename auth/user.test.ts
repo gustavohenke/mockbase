@@ -51,7 +51,7 @@ describe("#updateProfile()", () => {
     expect(user).toHaveProperty("photoURL", "http://foo.com");
     expect(store.update).toHaveBeenCalledWith(user.uid, {
       displayName: "foo",
-      photoURL: "http://foo.com"
+      photoURL: "http://foo.com",
     });
   });
 });

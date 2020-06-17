@@ -1,4 +1,5 @@
 # Mockbase
+
 [![Build status](https://img.shields.io/travis/gustavohenke/mockbase.svg?style=flat-square)](https://travis-ci.org/gustavohenke/mockbase)
 [![Coverage](https://img.shields.io/coveralls/github/gustavohenke/mockbase.svg?style=flat-square)](https://coveralls.io/github/gustavohenke/mockbase)
 
@@ -9,10 +10,11 @@ However, please note that not all features are implemented.
 Take a look at the [implemented features table](#implemented-features) to find out what is available and what is not.
 
 ## How to use
+
 Wherever you would use Firebase's app or its features, you pass a Mockbase app or feature instance:
 
 ```ts
-const firebase = require('firebase');
+const firebase = require("firebase");
 function signInWithFacebook(firebaseAuth: firebase.auth.Auth) {
   firebaseAuth.signInWithPopup(new firebase.auth.FacebookAuthProvider());
 }
@@ -21,19 +23,20 @@ function addTodo(text: string, todoCollection: firebase.firestore.CollectionRefe
   return todoCollection.add({ text });
 }
 
-const MockApp = require('mockbase');
-const app = new MockApp('app name');
+const MockApp = require("mockbase");
+const app = new MockApp("app name");
 signInWithFacebook(app.auth());
-addTodo('Clean home up', app.firestore().collection('todo'));
+addTodo("Clean home up", app.firestore().collection("todo"));
 ```
 
 ## Implemented features
-| Feature group | Status |
-| ------------- | ------ |
-| Auth          | ⚠️ Partly implemented |
-| Database      | ❌ Not implemented |
-| Firestore     | ✅ Implemented* |
-| Messaging     | ❌ Not implemented |
-| Storage       | ❌ Not implemented |
 
-_*_ There's no difference between server and cache, thus there won't be pending writes.
+| Feature group | Status                |
+| ------------- | --------------------- |
+| Auth          | ⚠️ Partly implemented |
+| Database      | ❌ Not implemented    |
+| Firestore     | ✅ Implemented\*      |
+| Messaging     | ❌ Not implemented    |
+| Storage       | ❌ Not implemented    |
+
+_\*_ There's no difference between server and cache, thus there won't be pending writes.

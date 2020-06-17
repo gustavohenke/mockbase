@@ -30,7 +30,10 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  createUserWithEmailAndPassword(email: string, password: string): Promise<firebase.auth.UserCredential> {
+  createUserWithEmailAndPassword(
+    email: string,
+    password: string
+  ): Promise<firebase.auth.UserCredential> {
     if (this.store.findByEmail(email)) {
       throw new Error("auth/email-already-in-use");
     }
@@ -89,7 +92,10 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  sendSignInLinkToEmail(email: string, actionCodeSettings: firebase.auth.ActionCodeSettings): Promise<void> {
+  sendSignInLinkToEmail(
+    email: string,
+    actionCodeSettings: firebase.auth.ActionCodeSettings
+  ): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
@@ -99,7 +105,7 @@ export class MockAuth implements firebase.auth.Auth {
 
   private signIn(user: User): Promise<firebase.auth.UserCredential> {
     this.currentUser = user;
-    this.authStateEvents.forEach(listener => {
+    this.authStateEvents.forEach((listener) => {
       listener(user);
     });
 
@@ -107,7 +113,7 @@ export class MockAuth implements firebase.auth.Auth {
       user,
       additionalUserInfo: null,
       credential: null,
-      operationType: 'signIn',
+      operationType: "signIn",
     });
   }
 
@@ -132,7 +138,10 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  signInWithEmailAndPassword(email: string, password: string): Promise<firebase.auth.UserCredential> {
+  signInWithEmailAndPassword(
+    email: string,
+    password: string
+  ): Promise<firebase.auth.UserCredential> {
     const user = this.store.findByEmail(email);
     if (!user) {
       return Promise.reject(new Error("auth/user-not-found"));
@@ -143,7 +152,10 @@ export class MockAuth implements firebase.auth.Auth {
     return this.signIn(user);
   }
 
-  signInWithEmailLink(email: string, emailLink?: string | undefined): Promise<firebase.auth.UserCredential> {
+  signInWithEmailLink(
+    email: string,
+    emailLink?: string | undefined
+  ): Promise<firebase.auth.UserCredential> {
     throw new Error("Method not implemented.");
   }
 
@@ -154,9 +166,11 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  async signInWithPopup(provider: firebase.auth.AuthProvider): Promise<firebase.auth.UserCredential> {
+  async signInWithPopup(
+    provider: firebase.auth.AuthProvider
+  ): Promise<firebase.auth.UserCredential> {
     const mock = Array.from(this.socialSignIns.values()).find(
-      mock => mock.type === provider.providerId
+      (mock) => mock.type === provider.providerId
     );
 
     if (!mock) {
@@ -186,7 +200,7 @@ export class MockAuth implements firebase.auth.Auth {
 
   signOut(): Promise<void> {
     this.currentUser = null;
-    this.authStateEvents.forEach(listener => listener(this.currentUser));
+    this.authStateEvents.forEach((listener) => listener(this.currentUser));
     return Promise.resolve();
   }
 
