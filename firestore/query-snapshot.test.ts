@@ -131,7 +131,7 @@ describe("#docChanges()", () => {
     });
   });
 
-  it("list docs as removed even when they are not not the last in the list", () => {
+  it("list docs as removed even when they are not the last in the list", () => {
     const docs = [
       new MockQueryDocumentSnapshot(query.firestore.doc("foo/0"), {}),
       new MockQueryDocumentSnapshot(query.firestore.doc("foo/1"), {}),
