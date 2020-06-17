@@ -92,8 +92,6 @@ export class MockCollectionGroup<T = firebase.firestore.DocumentData> extends Mo
       };
     }
 
-    const { next, error } = actualListeners;
-
     const listenerIndex = this.activeListeners.length;
     this.activeListeners.push({
       listener: actualListeners,
@@ -104,14 +102,14 @@ export class MockCollectionGroup<T = firebase.firestore.DocumentData> extends Mo
           .onSnapshot(
             () =>
               this.get().then((snapshot) => {
-                next(snapshot);
+                actualListeners.next(snapshot);
               }),
-            error
+            actualListeners.error
           );
       }),
     });
 
-    this.get().then((snapshot) => next(snapshot));
+    this.get().then((snapshot) => actualListeners.next(snapshot));
 
     return () => {
       this.activeListeners[listenerIndex].disposers.forEach((disposer) => disposer());
