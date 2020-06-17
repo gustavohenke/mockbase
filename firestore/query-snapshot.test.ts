@@ -178,6 +178,25 @@ describe("#docChanges()", () => {
   });
 });
 
+it("list changes that happen across different collections", () => {
+  const docs = [
+    new MockQueryDocumentSnapshot(query.firestore.doc("foo/a"), {}),
+    new MockQueryDocumentSnapshot(query.firestore.doc("bar/a"), {}),
+  ];
+
+  createSnapshot(docs);
+  const snapshot2 = createSnapshot([docs[0]]);
+
+  const changes = snapshot2.docChanges();
+  expect(changes).toHaveLength(1);
+  expect(changes).toContainEqual({
+    type: "removed",
+    oldIndex: 1,
+    newIndex: -1,
+    doc: docs[1],
+  });
+});
+
 describe("#forEach()", () => {
   it("iterates thru #docs", () => {
     const callback = jest.fn();
