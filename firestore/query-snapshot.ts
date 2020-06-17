@@ -37,7 +37,7 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
       }));
     }
 
-    const checkedIDs = new Set<string>();
+    const checkedPaths = new Set<string>();
     const previousDocs = this.previousSnapshot.docs;
     const changes: firebase.firestore.DocumentChange<T>[] = [];
 
@@ -60,11 +60,11 @@ export class MockQuerySnapshot<T = firebase.firestore.DocumentData>
         });
       }
 
-      if (previousDoc) checkedIDs.add(previousDoc.id);
+      if (previousDoc) checkedPaths.add(previousDoc.ref.path);
     }
 
     for (const [oldIndex, doc] of previousDocs.entries()) {
-      if (!checkedIDs.has(doc.id)) {
+      if (!checkedPaths.has(doc.ref.path)) {
         changes.push({
           type: "removed",
           oldIndex,
