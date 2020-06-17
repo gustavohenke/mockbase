@@ -20,7 +20,7 @@ describe("#createUserWithEmailAndPassword()", () => {
     auth.createUserWithEmailAndPassword("foo@bar.com", "password");
     expect(auth.store.add).toHaveBeenCalledWith({
       email: "foo@bar.com",
-      password: "password"
+      password: "password",
     });
   });
 
