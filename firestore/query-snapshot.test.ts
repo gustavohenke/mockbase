@@ -131,6 +131,33 @@ describe("#docChanges()", () => {
     });
   });
 
+  it("list docs as removed even when they are not the last in the list", () => {
+    const docs = [
+      new MockQueryDocumentSnapshot(query.firestore.doc("foo/0"), {}),
+      new MockQueryDocumentSnapshot(query.firestore.doc("foo/1"), {}),
+      new MockQueryDocumentSnapshot(query.firestore.doc("foo/2"), {}),
+      new MockQueryDocumentSnapshot(query.firestore.doc("foo/3"), {}),
+    ];
+
+    createSnapshot(docs);
+    const snapshot2 = createSnapshot([docs[0], docs[1], docs[3]]);
+
+    const changes = snapshot2.docChanges();
+    expect(changes).toHaveLength(2);
+    expect(changes).toContainEqual({
+      type: "removed",
+      oldIndex: 2,
+      newIndex: -1,
+      doc: docs[2],
+    });
+    expect(changes).toContainEqual({
+      type: "modified",
+      oldIndex: 3,
+      newIndex: 2,
+      doc: docs[3],
+    });
+  });
+
   it("lists docs as added when they are not in the previous snapshot", async () => {
     const docs = [
       new MockQueryDocumentSnapshot(query.firestore.doc("foo/bar"), {}),
@@ -148,6 +175,25 @@ describe("#docChanges()", () => {
       newIndex: 1,
       doc: docs[1],
     });
+  });
+});
+
+it("list changes that happen across different collections", () => {
+  const docs = [
+    new MockQueryDocumentSnapshot(query.firestore.doc("foo/a"), {}),
+    new MockQueryDocumentSnapshot(query.firestore.doc("bar/a"), {}),
+  ];
+
+  createSnapshot(docs);
+  const snapshot2 = createSnapshot([docs[0]]);
+
+  const changes = snapshot2.docChanges();
+  expect(changes).toHaveLength(1);
+  expect(changes).toContainEqual({
+    type: "removed",
+    oldIndex: 1,
+    newIndex: -1,
+    doc: docs[1],
   });
 });
 
