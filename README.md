@@ -33,10 +33,15 @@ addTodo("Clean home up", app.firestore().collection("todo"));
 
 | Feature group | Status                |
 | ------------- | --------------------- |
+| Analytics     | ❌ Not implemented    |
 | Auth          | ⚠️ Partly implemented |
 | Database      | ❌ Not implemented    |
 | Firestore     | ✅ Implemented\*      |
+| Functions     | ❌ Not implemented    |
+| Installations | ❌ Not implemented    |
 | Messaging     | ❌ Not implemented    |
+| Performance   | ❌ Not implemented    |
+| Remote config | ❌ Not implemented    |
 | Storage       | ❌ Not implemented    |
 
 _\*_ There's no difference between server and cache, thus there won't be pending writes.
