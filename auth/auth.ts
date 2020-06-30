@@ -4,6 +4,7 @@ import { SocialSignInMock } from "./social-signin-mock";
 import { User } from "./user";
 import { UserStore } from "./user-store";
 import { AuthSettings } from "./auth-settings";
+import { UserCredential } from "./user-credential";
 
 export type AuthStateChangeListener = (user: firebase.User | null) => void;
 
@@ -13,7 +14,6 @@ export class MockAuth implements firebase.auth.Auth {
   public settings: firebase.auth.AuthSettings = new AuthSettings();
   public tenantId: string | null;
   public readonly store = new UserStore();
-  private readonly socialSignIns = new Set<SocialSignInMock>();
   private readonly authStateEvents = new Set<AuthStateChangeListener>();
 
   constructor(public readonly app: MockApp) {}
@@ -38,8 +38,9 @@ export class MockAuth implements firebase.auth.Auth {
       throw new Error("auth/email-already-in-use");
     }
 
-    const user = this.store.add({ email, password });
-    return this.signIn(user);
+    const { providerId } = new firebase.auth.EmailAuthProvider();
+    const user = this.store.add({ email, password, providerId });
+    return this.signIn(user, { isNewUser: true });
   }
 
   fetchProvidersForEmail(email: string): Promise<any> {
@@ -60,7 +61,7 @@ export class MockAuth implements firebase.auth.Auth {
 
   mockSocialSignIn(provider: firebase.auth.AuthProvider) {
     const mock = new SocialSignInMock(provider.providerId);
-    this.socialSignIns.add(mock);
+    this.store.addSocialMock(mock);
     return mock;
   }
 
@@ -105,51 +106,25 @@ export class MockAuth implements firebase.auth.Auth {
 
   private signIn(
     user: User,
-    additionalUserInfo: firebase.auth.AdditionalUserInfo | null = null
+    { isNewUser }: { isNewUser: boolean }
   ): Promise<firebase.auth.UserCredential> {
     this.currentUser = user;
     this.authStateEvents.forEach((listener) => {
       listener(user);
     });
 
-    return Promise.resolve<firebase.auth.UserCredential>({
-      user,
-      additionalUserInfo,
-      credential: null,
-      operationType: "signIn",
-    });
+    return Promise.resolve(new UserCredential(user, "signIn", isNewUser));
   }
 
   private async signInWithSocial(provider: firebase.auth.AuthProvider) {
-    const mock = Array.from(this.socialSignIns.values()).find(
-      (mock) => mock.type === provider.providerId
-    );
-
-    if (!mock) {
-      throw new Error("No mock response set.");
-    }
-
-    // Mock is used, then it must go
-    this.socialSignIns.delete(mock);
-
-    const data = await mock.response;
+    const data = await this.store.consumeSocialMock(provider);
     let user = this.store.findByProviderAndEmail(data.email, provider.providerId);
     if (user) {
-      return this.signIn(user, {
-        isNewUser: false,
-        providerId: provider.providerId,
-        profile: null,
-        username: data.email,
-      });
+      return this.signIn(user, { isNewUser: false });
     }
 
     user = this.store.add({ ...data, providerId: provider.providerId });
-    return this.signIn(user, {
-      isNewUser: true,
-      providerId: provider.providerId,
-      profile: null,
-      username: data.email,
-    });
+    return this.signIn(user, { isNewUser: true });
   }
 
   signInAndRetrieveDataWithCredential(credential: firebase.auth.AuthCredential): Promise<any> {
@@ -158,11 +133,11 @@ export class MockAuth implements firebase.auth.Auth {
 
   signInAnonymously(): Promise<firebase.auth.UserCredential> {
     if (this.currentUser && this.currentUser.isAnonymous) {
-      return this.signIn(this.currentUser);
+      return this.signIn(this.currentUser, { isNewUser: false });
     }
 
     const user = this.store.add({ isAnonymous: true });
-    return this.signIn(user);
+    return this.signIn(user, { isNewUser: true });
   }
 
   signInWithCredential(credential: firebase.auth.AuthCredential): Promise<any> {
@@ -184,7 +159,7 @@ export class MockAuth implements firebase.auth.Auth {
       return Promise.reject(new Error("auth/wrong-password"));
     }
 
-    return this.signIn(user);
+    return this.signIn(user, { isNewUser: false });
   }
 
   signInWithEmailLink(

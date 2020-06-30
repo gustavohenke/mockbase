@@ -21,6 +21,7 @@ describe("#createUserWithEmailAndPassword()", () => {
     expect(auth.store.add).toHaveBeenCalledWith({
       email: "foo@bar.com",
       password: "password",
+      providerId: firebase.auth.EmailAuthProvider.PROVIDER_ID,
     });
   });
 

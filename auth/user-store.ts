@@ -1,8 +1,10 @@
 import { User, UserSchema, UserInfo } from "./user";
+import { SocialSignInMock } from "./social-signin-mock";
 
 export class UserStore {
   private nextId = 0;
   private store = new Map<string, UserSchema>();
+  private readonly socialMocks: SocialSignInMock[] = [];
 
   add(data: Partial<UserSchema>): User {
     const uid = ++this.nextId + "";
@@ -18,6 +20,23 @@ export class UserStore {
     const schema = user.toJSON() as UserSchema;
     this.store.set(schema.uid, schema);
     return user;
+  }
+
+  addSocialMock(mock: SocialSignInMock) {
+    this.socialMocks.push(mock);
+  }
+
+  consumeSocialMock(provider: firebase.auth.AuthProvider) {
+    const index = this.socialMocks.findIndex((mock) => mock.type === provider.providerId);
+    if (index === -1) {
+      throw new Error("No mock response set.");
+    }
+
+    // Mock is used, then it must go
+    const mock = this.socialMocks[index];
+    this.socialMocks.splice(index, 1);
+
+    return mock.response;
   }
 
   findByEmail(email: string): User | undefined {
