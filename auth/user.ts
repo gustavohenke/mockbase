@@ -1,4 +1,5 @@
 import * as firebase from "firebase";
+import { UserCredential } from "./user-credential";
 import { UserStore } from "./user-store";
 
 export interface UserSchema {
@@ -99,12 +100,26 @@ export class User implements firebase.User, UserSchema {
     throw new Error("Method not implemented.");
   }
 
-  linkWithPopup(provider: firebase.auth.AuthProvider): Promise<any> {
-    throw new Error("Method not implemented.");
+  private async linkWithSocial(provider: firebase.auth.AuthProvider) {
+    if (this.providerData.some((info) => info.providerId === provider.providerId)) {
+      throw new Error("auth/provider-already-linked");
+    }
+
+    const data = await this.store.consumeSocialMock(provider);
+    this.providerData = [...this.providerData, new UserInfo(this.uid, provider.providerId, data)];
+    this.store.update(this.uid, {
+      providerData: this.providerData,
+    });
+    this.providerId = provider.providerId;
+    return new UserCredential(this, "link", false);
   }
 
-  linkWithRedirect(provider: firebase.auth.AuthProvider): Promise<any> {
-    throw new Error("Method not implemented.");
+  linkWithPopup(provider: firebase.auth.AuthProvider): Promise<UserCredential> {
+    return this.linkWithSocial(provider);
+  }
+
+  async linkWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
+    await this.linkWithSocial(provider);
   }
 
   reauthenticateAndRetrieveDataWithCredential(
