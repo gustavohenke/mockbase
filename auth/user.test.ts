@@ -94,3 +94,21 @@ describe("#updateProfile()", () => {
     });
   });
 });
+
+describe("#unlink()", () => {
+  const providerId = firebase.auth.GoogleAuthProvider.PROVIDER_ID;
+
+  it("unlinks and updates providerData", async () => {
+    const user = new User({ uid: "1", providerData: [new UserInfo("1", providerId, {})] }, store);
+    await user.unlink(providerId);
+    expect(user.providerData).toHaveLength(0);
+    expect(store.update).toHaveBeenCalledWith(user.uid, {
+      providerData: user.providerData,
+    });
+  });
+
+  it("throws if provider isn't linked", () => {
+    const user = new User({ uid: "1" }, store);
+    return expect(user.unlink(providerId)).rejects.toThrowError("auth/no-such-provider");
+  });
+});

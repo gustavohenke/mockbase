@@ -162,8 +162,17 @@ export class User implements firebase.User, UserSchema {
     return { ...self };
   }
 
-  unlink(providerId: string): Promise<any> {
-    throw new Error("Method not implemented.");
+  async unlink(providerId: string): Promise<User> {
+    const index = this.providerData.findIndex((info) => info.providerId === providerId);
+    if (index === -1) {
+      throw new Error("auth/no-such-provider");
+    }
+
+    this.providerData.splice(index, 1);
+    this.store.update(this.uid, {
+      providerData: this.providerData,
+    });
+    return this;
   }
 
   updateEmail(newEmail: string): Promise<void> {
