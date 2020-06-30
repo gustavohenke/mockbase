@@ -119,8 +119,14 @@ describe("#signInWithPopup()", () => {
     const auth = new MockAuth(app);
     auth.mockSocialSignIn(provider).respondWithUser("Foo", "foo@bar.com");
 
-    const { user } = await auth.signInWithPopup(provider);
+    const { user, additionalUserInfo } = await auth.signInWithPopup(provider);
     expect(auth.currentUser).toBe(user);
+    expect(additionalUserInfo).toEqual({
+      isNewUser: true,
+      providerId: provider.providerId,
+      profile: null,
+      username: "foo@bar.com",
+    });
     expect(user).toHaveProperty("displayName", "Foo");
     expect(user).toHaveProperty("email", "foo@bar.com");
     expect(user).toHaveProperty("providerId", provider.providerId);
@@ -145,7 +151,8 @@ describe("#signInWithPopup()", () => {
 
     const credential1 = await auth.signInWithPopup(provider);
     const credential2 = await auth.signInWithPopup(provider);
-    expect(credential1).toEqual(credential2);
+    expect(credential2.user).toEqual(credential1.user);
+    expect(credential2.additionalUserInfo).toHaveProperty("isNewUser", false);
     expect(auth.currentUser).toBe(credential2.user);
   });
 

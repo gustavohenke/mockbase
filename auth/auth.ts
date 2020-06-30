@@ -103,7 +103,10 @@ export class MockAuth implements firebase.auth.Auth {
     return Promise.resolve();
   }
 
-  private signIn(user: User): Promise<firebase.auth.UserCredential> {
+  private signIn(
+    user: User,
+    additionalUserInfo: firebase.auth.AdditionalUserInfo | null = null
+  ): Promise<firebase.auth.UserCredential> {
     this.currentUser = user;
     this.authStateEvents.forEach((listener) => {
       listener(user);
@@ -111,7 +114,7 @@ export class MockAuth implements firebase.auth.Auth {
 
     return Promise.resolve<firebase.auth.UserCredential>({
       user,
-      additionalUserInfo: null,
+      additionalUserInfo,
       credential: null,
       operationType: "signIn",
     });
@@ -187,11 +190,21 @@ export class MockAuth implements firebase.auth.Auth {
         throw new Error("auth/account-exists-with-different-credential");
       }
 
-      return this.signIn(user);
+      return this.signIn(user, {
+        isNewUser: false,
+        providerId: provider.providerId,
+        profile: null,
+        username: data.email,
+      });
     }
 
     user = this.store.add({ ...data, providerId: provider.providerId });
-    return this.signIn(user);
+    return this.signIn(user, {
+      isNewUser: true,
+      providerId: provider.providerId,
+      profile: null,
+      username: data.email,
+    });
   }
 
   signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
