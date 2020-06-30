@@ -120,6 +120,38 @@ export class MockAuth implements firebase.auth.Auth {
     });
   }
 
+  private async signInWithSocial(provider: firebase.auth.AuthProvider) {
+    const mock = Array.from(this.socialSignIns.values()).find(
+      (mock) => mock.type === provider.providerId
+    );
+
+    if (!mock) {
+      throw new Error("No mock response set.");
+    }
+
+    // Mock is used, then it must go
+    this.socialSignIns.delete(mock);
+
+    const data = await mock.response;
+    let user = this.store.findByProviderAndEmail(data.email, provider.providerId);
+    if (user) {
+      return this.signIn(user, {
+        isNewUser: false,
+        providerId: provider.providerId,
+        profile: null,
+        username: data.email,
+      });
+    }
+
+    user = this.store.add({ ...data, providerId: provider.providerId });
+    return this.signIn(user, {
+      isNewUser: true,
+      providerId: provider.providerId,
+      profile: null,
+      username: data.email,
+    });
+  }
+
   signInAndRetrieveDataWithCredential(credential: firebase.auth.AuthCredential): Promise<any> {
     throw new Error("Method not implemented.");
   }
@@ -169,46 +201,12 @@ export class MockAuth implements firebase.auth.Auth {
     throw new Error("Method not implemented.");
   }
 
-  async signInWithPopup(
-    provider: firebase.auth.AuthProvider
-  ): Promise<firebase.auth.UserCredential> {
-    const mock = Array.from(this.socialSignIns.values()).find(
-      (mock) => mock.type === provider.providerId
-    );
-
-    if (!mock) {
-      throw new Error("No mock response set.");
-    }
-
-    // Mock is used, then it must go
-    this.socialSignIns.delete(mock);
-
-    const data = await mock.response;
-    let user = this.store.findByEmail(data.email);
-    if (user) {
-      if (user.providerId !== provider.providerId) {
-        throw new Error("auth/account-exists-with-different-credential");
-      }
-
-      return this.signIn(user, {
-        isNewUser: false,
-        providerId: provider.providerId,
-        profile: null,
-        username: data.email,
-      });
-    }
-
-    user = this.store.add({ ...data, providerId: provider.providerId });
-    return this.signIn(user, {
-      isNewUser: true,
-      providerId: provider.providerId,
-      profile: null,
-      username: data.email,
-    });
+  signInWithPopup(provider: firebase.auth.AuthProvider): Promise<firebase.auth.UserCredential> {
+    return this.signInWithSocial(provider);
   }
 
-  signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
-    throw new Error("Method not implemented.");
+  async signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
+    await this.signInWithSocial(provider);
   }
 
   signOut(): Promise<void> {
