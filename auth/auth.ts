@@ -117,13 +117,14 @@ export class MockAuth implements firebase.auth.Auth {
   }
 
   private async signInWithSocial(provider: firebase.auth.AuthProvider) {
-    const data = await this.store.consumeSocialMock(provider);
-    let user = this.store.findByProviderAndEmail(data.email, provider.providerId);
+    const mockResponse = await this.store.consumeSocialMock(provider);
+    let user = this.store.findByProviderAndEmail(mockResponse.email, provider.providerId);
     if (user) {
       return this.signIn(user, { isNewUser: false });
     }
 
-    user = this.store.add({ ...data, providerId: provider.providerId });
+    // user didn't exist, so it's created and then signed in
+    user = this.store.add({ ...mockResponse, providerId: provider.providerId });
     return this.signIn(user, { isNewUser: true });
   }
 

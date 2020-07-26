@@ -6,11 +6,16 @@ export class UserStore {
   private store = new Map<string, UserSchema>();
   private readonly socialMocks: SocialSignInMock[] = [];
 
+  /**
+   * Adds a user to this store with the given data.
+   * The new user is assigned a new ID and is returned.
+   */
   add(data: Partial<UserSchema>): User {
     const uid = ++this.nextId + "";
     const user = new User(
       {
         ...data,
+        // If the user is being created with a provider ID, then its data is coming from that provider.
         providerData: data.providerId ? [new UserInfo(uid, data.providerId, data)] : [],
         uid,
       },
@@ -26,6 +31,12 @@ export class UserStore {
     this.socialMocks.push(mock);
   }
 
+  /**
+   * Finds the mock response for a given AuthProvider, removes it from the list of mocks
+   * and returns its response.
+   *
+   * If a mock for that AuthProvider is not set, then this method throws.
+   */
   consumeSocialMock(provider: firebase.auth.AuthProvider) {
     const index = this.socialMocks.findIndex((mock) => mock.type === provider.providerId);
     if (index === -1) {
