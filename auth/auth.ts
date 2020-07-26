@@ -180,8 +180,8 @@ export class MockAuth implements firebase.auth.Auth {
     return this.signInWithSocial(provider);
   }
 
-  async signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
-    await this.signInWithSocial(provider);
+  signInWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
+    throw new Error("Method not implemented.");
   }
 
   signOut(): Promise<void> {
