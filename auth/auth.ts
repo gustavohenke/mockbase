@@ -4,7 +4,7 @@ import { SocialSignInMock } from "./social-signin-mock";
 import { User } from "./user";
 import { UserStore } from "./user-store";
 import { AuthSettings } from "./auth-settings";
-import { UserCredential } from "./user-credential";
+import { UserCredential, UserCredentialOptions } from "./user-credential";
 
 export type AuthStateChangeListener = (user: firebase.User | null) => void;
 
@@ -106,14 +106,14 @@ export class MockAuth implements firebase.auth.Auth {
 
   private signIn(
     user: User,
-    { isNewUser }: { isNewUser: boolean }
+    options: UserCredentialOptions
   ): Promise<firebase.auth.UserCredential> {
     this.currentUser = user;
     this.authStateEvents.forEach((listener) => {
       listener(user);
     });
 
-    return Promise.resolve(new UserCredential(user, "signIn", isNewUser));
+    return Promise.resolve(new UserCredential(user, "signIn", options));
   }
 
   private async signInWithSocial(provider: firebase.auth.AuthProvider) {

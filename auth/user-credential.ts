@@ -1,5 +1,9 @@
 import { User } from "./user";
 
+export interface UserCredentialOptions {
+  isNewUser: boolean;
+}
+
 export class UserCredential implements firebase.auth.UserCredential {
   readonly additionalUserInfo: firebase.auth.AdditionalUserInfo | null = null;
   readonly credential = null;
@@ -7,7 +11,7 @@ export class UserCredential implements firebase.auth.UserCredential {
   constructor(
     readonly user: User,
     readonly operationType: "signIn" | "link" | "reauthenticate",
-    isNewUser: boolean
+    { isNewUser }: UserCredentialOptions
   ) {
     if (!user.isAnonymous) {
       this.additionalUserInfo = {
