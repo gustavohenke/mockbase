@@ -1,5 +1,6 @@
 import * as firebase from "firebase";
 import { MockDocumentReference } from "./document-reference";
+import { DEFAULT_DATA_CONVERTER } from "./data-converter";
 
 export class MockDocumentSnapshot<T = firebase.firestore.DocumentData>
   implements firebase.firestore.DocumentSnapshot<T> {
@@ -91,6 +92,10 @@ export class MockQueryDocumentSnapshot<T = firebase.firestore.DocumentData>
   }
 
   data(options?: firebase.firestore.SnapshotOptions): T {
-    return this.ref.converter.fromFirestore(this, options || {});
+    // Create a new ref with the default converter so that consumeres can use .data() in their
+    // custom converters without causing an infinite loop of .data() calls.
+    const plainRef = this.ref.withConverter(DEFAULT_DATA_CONVERTER);
+    const plainSnapshot = new MockQueryDocumentSnapshot(plainRef, this._data);
+    return this.ref.converter.fromFirestore(plainSnapshot, options || {});
   }
 }
