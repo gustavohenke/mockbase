@@ -28,10 +28,10 @@ export class UserInfo implements firebase.UserInfo {
     readonly providerId: string,
     rest: Partial<Omit<firebase.UserInfo, "uid" | "providerId">>
   ) {
-    this.displayName = rest.displayName || null;
-    this.email = rest.email || null;
-    this.phoneNumber = rest.phoneNumber || null;
-    this.photoURL = rest.photoURL || null;
+    this.displayName = rest.displayName ?? null;
+    this.email = rest.email ?? null;
+    this.phoneNumber = rest.phoneNumber ?? null;
+    this.photoURL = rest.photoURL ?? null;
   }
 }
 
