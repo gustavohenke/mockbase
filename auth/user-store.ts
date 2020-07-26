@@ -40,13 +40,8 @@ export class UserStore {
   }
 
   findByEmail(email: string): User | undefined {
-    for (const user of this.store.values()) {
-      if (user.email === email) {
-        return new User(user, this);
-      }
-    }
-
-    return undefined;
+    const schema = [...this.store.values()].find((user) => user.email === email);
+    return schema && new User(schema, this);
   }
 
   findByProviderAndEmail(email: string, providerId: string): User | undefined {
