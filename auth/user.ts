@@ -111,7 +111,7 @@ export class User implements firebase.User, UserSchema {
       providerData: this.providerData,
     });
     this.providerId = provider.providerId;
-    return new UserCredential(this, "link", false);
+    return new UserCredential(this, "link", { isNewUser: false });
   }
 
   linkWithPopup(provider: firebase.auth.AuthProvider): Promise<UserCredential> {
@@ -119,7 +119,7 @@ export class User implements firebase.User, UserSchema {
   }
 
   async linkWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
-    await this.linkWithSocial(provider);
+    throw new Error("Method not implemented.");
   }
 
   reauthenticateAndRetrieveDataWithCredential(

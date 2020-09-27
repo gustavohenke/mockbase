@@ -48,6 +48,12 @@ describe("#fetchSignInMethodsForEmail()", () => {
       firebase.auth.EmailAuthProvider.PROVIDER_ID,
     ]);
   });
+
+  it("returns no sign in methods if email doesn't exist", async () => {
+    const auth = new MockAuth(app);
+
+    return expect(auth.fetchSignInMethodsForEmail("foo@bar.com")).resolves.toEqual([]);
+  });
 });
 
 describe("#onAuthStateChange()", () => {
