@@ -34,6 +34,28 @@ describe("#createUserWithEmailAndPassword()", () => {
   });
 });
 
+describe("#fetchSignInMethodsForEmail()", () => {
+  it("returns list of sign in methods", async () => {
+    const auth = new MockAuth(app);
+    await auth.createUserWithEmailAndPassword("foo@bar.com", "baz");
+
+    // sign in with a different method, to make sure things don't mix up
+    const provider = new firebase.auth.FacebookAuthProvider();
+    auth.mockSocialSignIn(provider).respondWithUser("John", "john@doe.com");
+    auth.signInWithPopup(provider);
+
+    return expect(auth.fetchSignInMethodsForEmail("foo@bar.com")).resolves.toEqual([
+      firebase.auth.EmailAuthProvider.PROVIDER_ID,
+    ]);
+  });
+
+  it("returns no sign in methods if email doesn't exist", async () => {
+    const auth = new MockAuth(app);
+
+    return expect(auth.fetchSignInMethodsForEmail("foo@bar.com")).resolves.toEqual([]);
+  });
+});
+
 describe("#onAuthStateChange()", () => {
   it("invokes listener right away with current status", async () => {
     const auth = new MockAuth(app);

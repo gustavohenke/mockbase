@@ -1,4 +1,5 @@
 import * as firebase from "firebase";
+import { UserCredential } from "./user-credential";
 import { UserStore } from "./user-store";
 
 export interface UserSchema {
@@ -99,11 +100,25 @@ export class User implements firebase.User, UserSchema {
     throw new Error("Method not implemented.");
   }
 
-  linkWithPopup(provider: firebase.auth.AuthProvider): Promise<any> {
-    throw new Error("Method not implemented.");
+  private async linkWithSocial(provider: firebase.auth.AuthProvider) {
+    if (this.providerData.some((info) => info.providerId === provider.providerId)) {
+      throw new Error("auth/provider-already-linked");
+    }
+
+    const data = await this.store.consumeSocialMock(provider);
+    this.providerData = [...this.providerData, new UserInfo(this.uid, provider.providerId, data)];
+    this.store.update(this.uid, {
+      providerData: this.providerData,
+    });
+    this.providerId = provider.providerId;
+    return new UserCredential(this, "link", { isNewUser: false });
   }
 
-  linkWithRedirect(provider: firebase.auth.AuthProvider): Promise<any> {
+  linkWithPopup(provider: firebase.auth.AuthProvider): Promise<UserCredential> {
+    return this.linkWithSocial(provider);
+  }
+
+  async linkWithRedirect(provider: firebase.auth.AuthProvider): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
@@ -147,8 +162,17 @@ export class User implements firebase.User, UserSchema {
     return { ...self };
   }
 
-  unlink(providerId: string): Promise<any> {
-    throw new Error("Method not implemented.");
+  async unlink(providerId: string): Promise<User> {
+    const index = this.providerData.findIndex((info) => info.providerId === providerId);
+    if (index === -1) {
+      throw new Error("auth/no-such-provider");
+    }
+
+    this.providerData.splice(index, 1);
+    this.store.update(this.uid, {
+      providerData: this.providerData,
+    });
+    return this;
   }
 
   updateEmail(newEmail: string): Promise<void> {

@@ -43,12 +43,10 @@ export class MockAuth implements firebase.auth.Auth {
     return this.signIn(user, { isNewUser: true });
   }
 
-  fetchProvidersForEmail(email: string): Promise<any> {
-    throw new Error("Method not implemented.");
-  }
-
   fetchSignInMethodsForEmail(email: string): Promise<string[]> {
-    throw new Error("Method not implemented.");
+    const user = this.store.findByEmail(email);
+    const providers = user ? user.providerData : [];
+    return Promise.resolve(providers.map((info) => info.providerId));
   }
 
   getRedirectResult(): Promise<any> {

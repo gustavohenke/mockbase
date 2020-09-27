@@ -1,10 +1,49 @@
+import * as firebase from "firebase";
 import createMockInstance from "jest-create-mock-instance";
-import { User } from "./user";
+import { User, UserInfo } from "./user";
 import { UserStore } from "./user-store";
 
 let store: jest.Mocked<UserStore>;
 beforeEach(() => {
   store = createMockInstance(UserStore);
+});
+
+describe("#linkWithPopup()", () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const response = { displayName: "foo", email: "foo@baz.com" };
+  beforeEach(() => {
+    store.consumeSocialMock.mockResolvedValue(response);
+  });
+
+  it("doesn't link if provider is already linked", async () => {
+    const info = new UserInfo("1", provider.providerId, {});
+    const user = new User({ uid: "1", providerData: [info] }, store);
+    return expect(user.linkWithPopup(provider)).rejects.toThrowError(
+      "auth/provider-already-linked"
+    );
+  });
+
+  it("links provider if not linked", async () => {
+    const user = new User({ uid: "1", email: "foo@bar.com" }, store);
+    const credential = await user.linkWithPopup(provider);
+    expect(credential.operationType).toBe("link");
+    expect(credential.user).toBe(user);
+    expect(credential.additionalUserInfo).toEqual({
+      providerId: provider.providerId,
+      profile: null,
+      isNewUser: false,
+      username: user.email,
+    });
+  });
+
+  it("updates providerData", async () => {
+    const user = new User({ uid: "1" }, store);
+    await user.linkWithPopup(provider);
+    expect(user.providerData).toContainEqual(new UserInfo(user.uid, provider.providerId, response));
+    expect(store.update).toHaveBeenCalledWith(user.uid, {
+      providerData: user.providerData,
+    });
+  });
 });
 
 describe("#updateEmail()", () => {
@@ -53,5 +92,23 @@ describe("#updateProfile()", () => {
       displayName: "foo",
       photoURL: "http://foo.com",
     });
+  });
+});
+
+describe("#unlink()", () => {
+  const providerId = firebase.auth.GoogleAuthProvider.PROVIDER_ID;
+
+  it("unlinks and updates providerData", async () => {
+    const user = new User({ uid: "1", providerData: [new UserInfo("1", providerId, {})] }, store);
+    await user.unlink(providerId);
+    expect(user.providerData).toHaveLength(0);
+    expect(store.update).toHaveBeenCalledWith(user.uid, {
+      providerData: user.providerData,
+    });
+  });
+
+  it("throws if provider isn't linked", () => {
+    const user = new User({ uid: "1" }, store);
+    return expect(user.unlink(providerId)).rejects.toThrowError("auth/no-such-provider");
   });
 });
