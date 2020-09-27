@@ -4,7 +4,8 @@ import { DEFAULT_DATA_CONVERTER } from "./data-converter";
 import { MockQuery } from "./query";
 import { MockDocumentReference } from "./document-reference";
 
-export class MockCollectionReference<T = firebase.firestore.DocumentData> extends MockQuery<T>
+export class MockCollectionReference<T = firebase.firestore.DocumentData>
+  extends MockQuery<T>
   implements firebase.firestore.CollectionReference<T> {
   constructor(
     firestore: MockFirestore,
