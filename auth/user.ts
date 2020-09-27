@@ -7,7 +7,7 @@ export interface UserSchema {
   metadata: firebase.auth.UserMetadata;
   password?: string;
   phoneNumber: string | null;
-  providerData: (firebase.UserInfo | null)[];
+  providerData: UserInfo[];
   refreshToken: string;
   displayName: string | null;
   email: string | null;
@@ -17,7 +17,26 @@ export interface UserSchema {
   tenantId: string | null;
 }
 
+export class UserInfo implements firebase.UserInfo {
+  readonly displayName: string | null;
+  readonly email: string | null;
+  readonly phoneNumber: string | null;
+  readonly photoURL: string | null;
+
+  constructor(
+    readonly uid: string,
+    readonly providerId: string,
+    rest: Partial<Omit<firebase.UserInfo, "uid" | "providerId">>
+  ) {
+    this.displayName = rest.displayName ?? null;
+    this.email = rest.email ?? null;
+    this.phoneNumber = rest.phoneNumber ?? null;
+    this.photoURL = rest.photoURL ?? null;
+  }
+}
+
 export class User implements firebase.User, UserSchema {
+  readonly uid: string;
   displayName: string | null;
   email: string | null;
   emailVerified: boolean;
@@ -26,11 +45,10 @@ export class User implements firebase.User, UserSchema {
   password?: string;
   phoneNumber: string | null;
   photoURL: string | null;
-  providerData: (firebase.UserInfo | null)[];
+  providerData: UserInfo[];
   providerId: string;
   refreshToken: string;
   tenantId: string | null;
-  uid: string;
   multiFactor: firebase.User.MultiFactorUser;
 
   constructor(data: Partial<UserSchema>, private readonly store: UserStore) {

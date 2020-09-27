@@ -21,6 +21,7 @@ describe("#createUserWithEmailAndPassword()", () => {
     expect(auth.store.add).toHaveBeenCalledWith({
       email: "foo@bar.com",
       password: "password",
+      providerId: firebase.auth.EmailAuthProvider.PROVIDER_ID,
     });
   });
 
@@ -54,7 +55,7 @@ describe("#onAuthStateChange()", () => {
     expect(listener).toHaveBeenCalledWith(credential.user);
   });
 
-  it("doesn't invokes the listener after it's disposed", async () => {
+  it("doesn't invoke the listener after it's disposed", async () => {
     const auth = new MockAuth(app);
     const listener = jest.fn();
     const disposer = auth.onAuthStateChanged(listener);
